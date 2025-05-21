@@ -1,15 +1,32 @@
 -- ** init db schema @ ./menu_db_init.sql
 -- // i.e. run ...init.sql through docker to inst db from file
--- cat menu_db_init.sql | docker exec -i pg_container psql -d menus_project
+cat menu_db_init.sql | docker exec -i erp_postgres psql -U postgres -d erp_main
 
--- *** backup
--- $ docker cp pg_container:menus_dump.sql data
--- $ docker exec pg_container pg_dump --verbose --file menus_dump.sql menus_project
 
--- $ docker exec pg_container psql -c 'CREATE DATABASE menus_project_new;'
+-- *** backup (for erp_main database in erp_postgres)
+-- -- Dump the erp_main database to a file inside the container:
+-- $ docker exec erp_postgres pg_dump --verbose --file /tmp/erp_main_dump.sql -U postgres erp_main
 
--- // slurp dump file into new db
--- $ docker exec pg_container psql menus_project_new -f menus_dump.sql
+-- -- Copy the dump file from the container to the host:
+-- $ docker cp erp_postgres:/tmp/erp_main_dump.sql ./erp_main_dump.sql
+
+-- -- (Optional) Remove the dump file from the container after copying:
+-- $ docker exec erp_postgres rm /tmp/erp_main_dump.sql
+
+-- -- *** restore (for erp_main database in erp_postgres)
+-- -- Copy the backup file from the host to the container:
+-- $ docker cp ./erp_main_dump.sql erp_postgres:/tmp/erp_main_dump.sql
+
+-- -- (Optional) Terminate other connections and drop/recreate the database:
+-- $ docker exec -i erp_postgres psql -U postgres -d postgres -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = 'erp_main' AND pid <> pg_backend_pid();"
+-- $ docker exec -i erp_postgres psql -U postgres -d postgres -c "DROP DATABASE IF EXISTS erp_main;"
+-- $ docker exec -i erp_postgres psql -U postgres -d postgres -c "CREATE DATABASE erp_main;"
+
+-- -- Restore the database from the dump file:
+-- $ docker exec -i erp_postgres psql -U postgres -d erp_main -f /tmp/erp_main_dump.sql
+
+-- -- (Optional) Remove the dump file from the container after restoring:
+-- $ docker exec erp_postgres rm /tmp/erp_main_dump.sql
 
 
 -- kill other connections
