@@ -1,0 +1,63 @@
+# version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_erp_flask
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: erp_main
+    volumes:
+      - pgdata_erp:/var/lib/postgresql/data
+      - ./menu_db_init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5435:5432"
+    networks:
+      - erpnet
+
+  api:
+    build:
+      context: ./modules/menus_api_flask/menus
+    container_name: api_erp_flask
+    environment:
+      FLASK_APP: wsgi.py
+      FLASK_ENV: development
+      FLASK_DEBUG: 1
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/erp_main
+      PYTHONPATH: /app/menus
+    volumes:
+      - ./modules/menus_api_flask/menus:/app/menus
+    depends_on:
+      - db
+    command: >
+      bash -c "
+        until pg_isready -h db -p 5432 -U postgres; do
+          echo 'Waiting for Postgres...';
+          sleep 2;
+        done &&
+        flask db upgrade &&
+        flask run --host=0.0.0.0 --port=5000 --reload
+      "
+    ports:
+      - "5001:5000"
+    networks:
+      - erpnet
+
+  frontend:
+    image: node:18-alpine
+    container_name: frontend_erp_flask
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    command: tail -f /dev/null
+    ports:
+      - "3000:3000"
+    networks:
+      - erpnet
+
+volumes:
+  pgdata_erp:
+
+networks:
+  erpnet:

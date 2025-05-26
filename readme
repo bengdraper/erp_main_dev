@@ -1,3 +1,0 @@
-docker network create erpnet
-port 5435:5432
-
