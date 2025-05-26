@@ -1,3 +1,4 @@
-modules
 .old
 modules/menus/.venv
+copilot_context
+.vscode

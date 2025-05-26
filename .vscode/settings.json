@@ -1,0 +1,6 @@
+{
+  // Always open copilot_context.md on workspace startup
+  "files.toOpen": [
+    { "file": "${workspaceFolder}/copilot_context.md" }
+  ]
+}
