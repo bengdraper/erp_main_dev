@@ -18,16 +18,19 @@ services:
 
   api:
     build:
-      context: ./modules/menus_api_flask/menus
+      # context: ./modules/menus_api_flask/menus
+      context: ./services/flask_api
     container_name: api_erp_flask
     environment:
       FLASK_APP: wsgi.py
       FLASK_ENV: development
       FLASK_DEBUG: 1
       DATABASE_URL: postgresql://postgres:postgres@db:5432/erp_main
-      PYTHONPATH: /app/menus
+      # PYTHONPATH: /app/menus
+      PYTHONPATH: /app
     volumes:
-      - ./modules/menus_api_flask/menus:/app/menus
+      # - ./modules/menus_api_flask/menus:/app/menus
+      - ./services/flask_api:/app
     depends_on:
       - db
     command: >
