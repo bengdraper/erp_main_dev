@@ -15,8 +15,8 @@ from sqlalchemy import insert
 bp = Blueprint('users', __name__, url_prefix='/users')
 @bp.route('', methods=['GET']) # decorate path and list of http verbs
 def index():
-    log = ['hello users']
-    return jsonify(log)
+    # log = ['hello users']
+    # return jsonify(log)
 
     users = User.query.order_by(User.id).all() # order by for case update changes db record position query all return out of expected order
     result = []
