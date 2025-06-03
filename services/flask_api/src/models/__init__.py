@@ -13,6 +13,6 @@ from .chart_of_accounts import ChartOfAccounts, chart_of_accounts_sales_account_
 # from .menu import * as menu_all
 from .menu import Menu, Menus_RecipesPlated, RecipePlated, RecipesPlated_RecipesNested, RecipesPlated_IngredientsTypes, RecipeNested, RecipesNested_IngredientsTypes, IngredientType
 
-from .product import Ingredients_VendorItem, Vendor
+from .product import IngredientsVendorItem, Vendor
 
 

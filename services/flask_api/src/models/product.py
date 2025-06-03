@@ -4,7 +4,7 @@ from datetime import timezone
 
 from . import db
 
-class Ingredients_VendorItem(db.Model):
+class IngredientsVendorItem(db.Model):
     __tablename__ = 'ingredients_vendor_items'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

@@ -1,4 +1,8 @@
-# # api collection
+'''
+exposes
+/stores
+'''
+
 from flask import Blueprint, jsonify, abort, request
 from ..models import db, Store
 

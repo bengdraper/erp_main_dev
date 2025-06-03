@@ -1,23 +1,37 @@
-# api collection
+'''
+exposing the following routes
+/menus
+'''
+
 from flask import Blueprint, jsonify, abort, request
-from ..models import db
+from ..models import db, Menu, RecipeNested, RecipePlated, IngredientType
 
 bp = Blueprint('menus', __name__, url_prefix='/menus')
 
 @bp.route('', methods=['GET']) # decorate path and list of http verbs
 def index():
-    print('hello index route called')
+    # print('hello index route called')
     log = ['hello hello.. hello...']
-    return jsonify(log)
 
-    # tweets = Tweet.query.all() # ORM performs select query
+    menus = Menu.query.order_by(Menu.id).all()
+    result = []
 
-    # result = []
+    for m in menus:
+        result.append(m.serialize())
 
-    # for t in tweets:
-    #     result.append(t.serialize()) # build list of tweets as dicts
+    return jsonify(result)
 
-    # return jsonify(result) # return json res
+@bp.route('/<int:id>', methods=['GET'])
+def show(id: int):
+
+    r = Menu.query.get_or_404(id)
+
+    return jsonify(r.serialize())
+
+
+
+
+
 
 
 # show a tweet

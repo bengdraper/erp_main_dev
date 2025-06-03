@@ -1,12 +1,11 @@
 # Flask API Service
 
-This directory contains the Flask-based REST API service for the ERP system.
+Restaurant ERP Flask service for basic db interactions, recipes and menus function.
 
 ## Overview
-- **Framework:** Flask (with SQLAlchemy, Alembic for migrations)
-- **Purpose:** Provides backend API endpoints for ERP modules (users, companies, stores, etc.)
-- **Database:** PostgreSQL (configured via Docker Compose)
-- **Containerized:** Yes (Docker/Docker Compose)
+
+Using flask, SQLAlchemy, alembic, provides basic CRUD for Postgres instance;
+
 
 ## Directory Structure
 ```
@@ -55,7 +54,3 @@ docker compose exec flask_api alembic upgrade head
   ```
 - **Configuration:** Environment variables and config files are managed in `instance/` or via Docker Compose.
 
-## Additional Information
-
-- This service is part of a modular ERP system and is designed for extensibility and maintainability.
-- For questions or contributions, see the main project documentation or contact the maintainers.

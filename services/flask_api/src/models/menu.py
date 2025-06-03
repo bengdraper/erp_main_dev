@@ -195,10 +195,11 @@ class RecipeNested(db.Model):
     description = db.Column(db.Text, nullable=False)
     notes = db.Column(db.Text, nullable=False)
     recipe_type = db.Column(db.Text, nullable=True)
-    yield_amount = db.Column(db.Numeric, nullable=False)
+    yield_amount = db.Column('yield', db.Numeric, nullable=False)
     yield_uom = db.Column(db.Text, nullable=False)
 
     def __init__(self, description: str, notes: str, recipe_type: str, yield_amount: float, yield_uom: str):
+    # def __init__(self, description: str, notes: str, recipe_type: str, yield_amount: float, yield_uom: str):
         self.description = description
         self.notes = notes
         self.recipe_type = recipe_type
@@ -283,17 +284,22 @@ class IngredientType(db.Model):
     unit_cost = db.Column(db.Numeric, nullable=False)
     unit_of_measure = db.Column(db.Text, nullable=False)
 
-    def __init__(self, description: str, unit_cost: float, unit_of_measure: str):
+    def __init__(self, description: str, unit_cost: float, unit_of_measure: str, cog_account_id: int, preferred_ingredient_item_id: int = None, current_ingredient_item_id: int = None):
         self.description = description
         self.unit_cost = unit_cost
         self.unit_of_measure = unit_of_measure
+        self.preferred_ingredient_item_id = preferred_ingredient_item_id
+        self.current_ingredient_item_id = current_ingredient_item_id
 
     def serialize(self):
         return {
             'id': self.id,
             'description': self.description,
             'unit_cost': self.unit_cost,
-            'unit_of_measure': self.unit_of_measure
+            'unit_of_measure': self.unit_of_measure,
+            'cog_account_id': self.cog_account_id,
+            'preferred_ingredient_item_id': self.current_ingredient_item_id,
+            'current_ingredient_item_id': self.current_ingredient_item_id
         }
 
     # CREATE TABLE ingredients_types (

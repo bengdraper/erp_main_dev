@@ -1,4 +1,9 @@
-# api collection
+'''
+exposes
+/users
+/users/id
+'''
+
 from flask import Blueprint, jsonify, abort, request
 from ..models import db, User
 # import hashlib

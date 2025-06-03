@@ -29,3 +29,5 @@ $ deactivate
 
 # flask run --host=0.0.0.0
 # // and maybe --debug
+
+docker compose -f api
