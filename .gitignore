@@ -1,3 +1,4 @@
 .vscode
 .context
 backend/venv
+services/flask_api/.venv

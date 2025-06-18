@@ -6,7 +6,6 @@ Restaurant ERP Flask service for basic db interactions, recipes and menus functi
 
 Using flask, SQLAlchemy, alembic, provides basic CRUD for Postgres instance;
 
-
 ## Directory Structure
 ```
 services/flask_api/
@@ -21,6 +20,7 @@ services/flask_api/
 ├── migrations/
 └── ...
 ```
+API contains endpoint collections, models reflects DB structure in accordance with db schema at project root 
 
 ## Setup & Usage
 

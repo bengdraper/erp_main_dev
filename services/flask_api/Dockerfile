@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # COPY . .
 COPY src/ /app/src/
 COPY migrations/ /app/migrations/
-COPY requirements.txt /appa/
+COPY requirements.txt /app/
 COPY wsgi.py /app/
 
 EXPOSE 5001

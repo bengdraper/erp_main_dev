@@ -1,0 +1,1 @@
+from .tables import bp as tables_bp

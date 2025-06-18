@@ -1,6 +1,7 @@
 import os
 from flask import Flask
 from flask_migrate import Migrate
+from flask_cors import CORS
 
 from .api import *
 
@@ -11,7 +12,8 @@ from .api import (
     menus,
     coas,
     vendors,
-    recipes
+    recipes,
+    tables_bp
     )
 
 # https://flask.palletsprojects.com/en/2.0.x/patterns/appfactories/
@@ -19,6 +21,7 @@ from .api import (
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
+    CORS(app)
     app.config.from_mapping(
         SECRET_KEY='dev',
         SQLALCHEMY_DATABASE_URI='postgresql://postgres:postgres@db:5432/erp_main',
@@ -51,7 +54,7 @@ def create_app(test_config=None):
     app.register_blueprint(stores.bp)
     app.register_blueprint(coas.bp)
     app.register_blueprint(vendors.bp)
-    # app.register_blueprint(products.bp)
+    app.register_blueprint(tables_bp)
 
     def list_routes(app):
         import urllib
