@@ -1,7 +1,9 @@
 '''
 exposes
 /users
-/users/id
+/users/id (GET)
+/users/id (PUT)
+/users/id/stores (GET)
 '''
 
 from flask import Blueprint, jsonify, abort, request
@@ -18,6 +20,7 @@ from sqlalchemy import insert
     # return hashlib.sha512((password + salt).encode('utf-8')).hexdigest()
 
 bp = Blueprint('users', __name__, url_prefix='/users')
+
 @bp.route('', methods=['GET']) # decorate path and list of http verbs
 def index():
     # log = ['hello users']
@@ -39,35 +42,6 @@ def show(id: int):
 
     return jsonify(u.serialize())
 
-
-# # post a tweet from client
-# @bp.route('', methods=['POST'])  # for POST requests @ /users/'' (ala blueprint)
-# def create():
-
-#     # for incoming post request from client
-#     # confirm username and password exist, as json?
-
-#     # check if client request body includes username and password
-#     if 'username' not in request.json or 'password' not in request.json:
-#         return abort(400)  # flask method abort() w/ status code 
-
-#     # validate username => 3 char and password => 8 char or fail
-#     if len(request.json['username']) < 3 or len(request.json['password']) < 8:
-#         return abort(400)
-
-#     # create new user in db from client request payload
-#     u = User(
-#         username=request.json['username'],
-#         password=scramble(request.json['password'])
-#     )
-
-#     db.session.add(u)  # create this user migration at db; sqlalchemy .add()
-
-#     db.session.commit()  # send it; sqlalchemy .commit()
-
-#     return jsonify(u.serialize())
-
-
 # delete a user from client
 @bp.route('/<int:id>', methods=['DELETE'])  # for delete requests @ /users/'' (ala blueprint)
 def delete(id: int):
@@ -80,6 +54,46 @@ def delete(id: int):
         return jsonify(True)
     except:
         return jsonify(False)
+
+@bp.route('/<int:id>', methods=['PUT'])
+def update_user_by_id(id):
+    """Update user profile fields"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        # find user
+        user = User.query.get(id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        if 'name' in data:
+            user.name = data['name']
+            
+        if 'email' in data:
+            user.email = data['email']
+
+        db.session.commit()
+        
+        return jsonify(user.serialize())
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # @bp.route('/<int:id>', methods=['PATCH','PUT'])
