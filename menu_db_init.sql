@@ -16,10 +16,9 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    permissions INT NOT NULL,
     name TEXT NOT NULL,
     date_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    company_id INT NOT NULL
+    company_id INT
 
     -- users
     -- CONSTRAINT fk_users_company
@@ -95,11 +94,11 @@ CREATE TABLE chart_of_accounts_sales_account_categories (
     -- chart_of_accounts_sales_account_categories
     -- CONSTRAINT fk_chart_of_accounts_sales_categories_chart
     -- FOREIGN KEY (chart_of_accounts_id)
-    -- REFERENCS chart_of_accounts (id) ON DELETE RESTRICT,
+    -- REFERENCES chart_of_accounts (id) ON DELETE RESTRICT,
 
     -- CONSTRAINT fk_chart_of_accounts_sales_account_categories_sales_account
     -- FOREIGN KEY (sales_account_categories_id)
-    -- REFERENCS sales_account_categories (id) ON DELETE CASCADE
+    -- REFERENCES sales_account_categories (id) ON DELETE CASCADE
 );
 
 CREATE TABLE chart_of_accounts_cog_account_categories (
@@ -506,3 +505,232 @@ CREATE TABLE vendors (
     FOREIGN KEY (vendor_id)
     REFERENCES vendors (id) ON DELETE RESTRICT
     ;
+
+-- roles and permissions
+
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT
+);
+
+CREATE TABLE permissions (
+    id SERIAL PRIMARY KEY,
+    codename TEXT NOT NULL UNIQUE,
+    description TEXT
+);
+CREATE TABLE users_roles (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    role_id INT NOT NULL,
+    org_id INT NOT NULL,
+    division_id INT,
+    company_id INT,
+    store_id INT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+    FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+    FOREIGN KEY (division_id) REFERENCES divisions(id) ON DELETE CASCADE,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE,
+    UNIQUE (user_id, role_id, org_id, division_id, company_id, store_id)
+);
+-- CREATE TABLE users_roles (
+--     user_id INT NOT NULL,
+--     role_id INT NOT NULL,
+--     company_id INT,
+--     store_id INT,
+--     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+--     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+--     FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+--     FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE,
+-- );
+-- ALTER TABLE users_roles
+--     ADD COLUMN id SERIAL PRIMARY KEY,
+--     ADD COLUMN org_id INT NOT NULL,
+--     ADD COLUMN division_id INT,
+--     ADD CONSTRAINT fk_users_roles_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+--     ADD CONSTRAINT fk_users_roles_division
+--         FOREIGN KEY (division_id) REFERENCES divisions(id) ON DELETE CASCADE;
+--     ADD CONSTRAINT uq_users_roles_scope
+--         UNIQUE (user_id, role_id, org_id, division_id, company_id, store_id);
+
+CREATE TABLE roles_permissions (
+    role_id INT NOT NULL,
+    permission_id INT NOT NULL,
+    PRIMARY KEY (role_id, permission_id),
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
+);
+
+-- for roles and permissions org /div level
+CREATE TABLE organizations (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT
+);
+
+CREATE TABLE divisions (
+    id SERIAL PRIMARY KEY,
+    org_id INT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE
+);
+
+ALTER TABLE companies
+    ADD COLUMN org_id INT,
+    ADD CONSTRAINT fk_companies_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+ALTER TABLE stores
+    ADD COLUMN division_id INT,
+    ADD CONSTRAINT fk_stores_divisions
+        FOREIGN KEY (division_id) REFERENCES divisions(id) ON DELETE RESTRICT;
+
+-- iterating users_roles permission strategy...
+
+ALTER TABLE users
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_users_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- update scope designation main tables for RLS
+
+-- USERS
+ALTER TABLE users
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_users_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- COMPANIES
+ALTER TABLE companies
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_companies_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- STORES
+ALTER TABLE stores
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_stores_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- MENUS
+ALTER TABLE menus
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_menus_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- STORES_MENUS (bridge)
+ALTER TABLE stores_menus
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_stores_menus_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- MENUS_RECIPES_PLATED (bridge)
+ALTER TABLE menus_recipes_plated
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_menus_recipes_plated_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- RECIPES_PLATED
+ALTER TABLE recipes_plated
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_recipes_plated_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- RECIPES_PLATED_RECIPES_NESTED (bridge)
+ALTER TABLE recipes_plated_recipes_nested
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_recipes_plated_recipes_nested_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- RECIPES_PLATED_INGREDIENTS_TYPES (bridge)
+ALTER TABLE recipes_plated_ingredients_types
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_recipes_plated_ingredients_types_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- RECIPES_NESTED
+ALTER TABLE recipes_nested
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_recipes_nested_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- RECIPES_NESTED_INGREDIENTS_TYPES (bridge)
+ALTER TABLE recipes_nested_ingredients_types
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_recipes_nested_ingredients_types_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- INGREDIENTS_TYPES
+ALTER TABLE ingredients_types
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_ingredients_types_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- INGREDIENTS_VENDOR_ITEMS
+ALTER TABLE ingredients_vendor_items
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_ingredients_vendor_items_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- VENDORS
+ALTER TABLE vendors
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_vendors_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- CHART_OF_ACCOUNTS
+ALTER TABLE chart_of_accounts
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_chart_of_accounts_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- CHART_OF_ACCOUNTS_SALES_ACCOUNT_CATEGORIES (bridge)
+ALTER TABLE chart_of_accounts_sales_account_categories
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_chart_of_accounts_sales_account_categories_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- CHART_OF_ACCOUNTS_COG_ACCOUNT_CATEGORIES (bridge)
+ALTER TABLE chart_of_accounts_cog_account_categories
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_chart_of_accounts_cog_account_categories_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- SALES_ACCOUNT_CATEGORIES
+ALTER TABLE sales_account_categories
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_sales_account_categories_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- SALES_ACCOUNT_CATEGORIES_SALES_ACCOUNTS (bridge)
+ALTER TABLE sales_account_categories_sales_accounts
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_sales_account_categories_sales_accounts_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- SALES_ACCOUNTS
+ALTER TABLE sales_accounts
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_sales_accounts_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- COG_ACCOUNT_CATEGORIES
+ALTER TABLE cog_account_categories
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_cog_account_categories_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- COG_ACCOUNTS
+ALTER TABLE cog_accounts
+    ADD COLUMN org_id INT NOT NULL,
+    ADD CONSTRAINT fk_cog_accounts_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+
+-- metadata cols:
+ALTER TABLE organizations ADD COLUMN metadata JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE companies ADD COLUMN metadata JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE users ADD COLUMN preferences JSONB DEFAULT '{}'::jsonb;

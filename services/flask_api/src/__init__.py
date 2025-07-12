@@ -13,7 +13,9 @@ from .api import (
     coas,
     vendors,
     recipes,
-    tables_bp
+    tables_bp,
+    tables,
+    users_stores
     )
 
 # https://flask.palletsprojects.com/en/2.0.x/patterns/appfactories/
@@ -54,7 +56,10 @@ def create_app(test_config=None):
     app.register_blueprint(stores.bp)
     app.register_blueprint(coas.bp)
     app.register_blueprint(vendors.bp)
-    app.register_blueprint(tables_bp)
+    app.register_blueprint(tables_bp) # idk what's up here but it works
+    # app.register_blueprint(tables.bp) # this errs
+    app.register_blueprint(users_stores.bp)
+
 
     def list_routes(app):
         import urllib

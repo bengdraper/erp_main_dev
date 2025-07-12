@@ -11,7 +11,7 @@ bp = Blueprint('users_stores', __name__, url_prefix='/users_stores')
 
 @bp.route('', methods=['GET'])
 def index():
-    user_id = request.args.get('users_id')
+    user_id = request.args.get('user_id')
 
     if user_id:
         response = db.session.query(users_stores).filter(users_stores.c.user_id == user_id).all()
