@@ -39,9 +39,19 @@ services:
           echo 'Waiting for Postgres...';
           sleep 2;
         done &&
-        flask db upgrade &&
+        python seed.py &&
         flask run --host=0.0.0.0 --port=5000 --reload
       "
+    # command: >
+    #   bash -c "
+    #     until pg_isready -h db -p 5432 -U postgres; do
+    #       echo 'Waiting for Postgres...';
+    #       sleep 2;
+    #     done &&
+    #     python seed.py &&
+    #     flask db upgrade &&
+    #     flask run --host=0.0.0.0 --port=5000 --reload
+    #   "
     ports:
       - "5001:5000"
     networks:
@@ -59,15 +69,15 @@ services:
   #   networks:
   #     - erpnet
 
-  backend:
-    build: ./backend
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - ./backend:/app
-    ports:
-      - "8000:8000"
-    networks:
-      - erpnet
+  # backend:
+  #   build: ./backend
+  #   command: python manage.py runserver 0.0.0.0:8000
+  #   volumes:
+  #     - ./backend:/app
+  #   ports:
+  #     - "8000:8000"
+  #   networks:
+  #     - erpnet
 
 volumes:
   pgdata_erp:

@@ -33,6 +33,8 @@ CREATE TABLE users (
 CREATE TABLE users_stores (
     user_id UUID NOT NULL,
     store_id UUID NOT NULL,
+    date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
     PRIMARY KEY (user_id, store_id)
 
     -- users_stores
@@ -522,6 +524,22 @@ CREATE TABLE permissions (
     codename TEXT NOT NULL UNIQUE,
     description TEXT
 );
+
+-- for roles and permissions org /div level
+CREATE TABLE organizations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE,
+    description TEXT
+);
+
+CREATE TABLE divisions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE
+);
+
 CREATE TABLE users_roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
@@ -568,24 +586,24 @@ CREATE TABLE roles_permissions (
 );
 
 -- for roles and permissions org /div level
-CREATE TABLE organizations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL UNIQUE,
-    description TEXT
-);
+-- CREATE TABLE organizations (
+--     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--     name TEXT NOT NULL UNIQUE,
+--     description TEXT
+-- );
 
-CREATE TABLE divisions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    org_id UUID NOT NULL,
-    name TEXT NOT NULL,
-    description TEXT,
-    FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE
-);
+-- CREATE TABLE divisions (
+--     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--     org_id UUID NOT NULL,
+--     name TEXT NOT NULL,
+--     description TEXT,
+--     FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE
+-- );
 
-ALTER TABLE companies
-    ADD COLUMN org_id UUID,
-    ADD CONSTRAINT fk_companies_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- ALTER TABLE companies
+--     ADD COLUMN org_id UUID,
+--     ADD CONSTRAINT fk_companies_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 ALTER TABLE stores
     ADD COLUMN division_id UUID,
@@ -602,10 +620,10 @@ ALTER TABLE users
 -- update scope designation main tables for RLS
 
 -- USERS
-ALTER TABLE users
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_users_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- ALTER TABLE users
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_users_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- COMPANIES
 ALTER TABLE companies

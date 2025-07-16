@@ -1,6 +1,9 @@
 import datetime
 from sqlalchemy.sql import text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+import uuid
 from datetime import timezone
+from typing import Optional
 
 from . import db
 
@@ -9,10 +12,11 @@ class User(db.Model):
 
     # instantiate attributes matching user table columns
     # col id 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    # id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = db.Column(db.String(128), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
-    permissions = db.Column(db.Integer, nullable=False)
+    preferences = db.Column(JSONB, nullable=True)
     name = db.Column(db.String(128), nullable=False)
     date_updated = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
     # constraint fkey company id
@@ -26,10 +30,10 @@ class User(db.Model):
     # -- REFERENCES companies (id) ON DELETE SET NULL
 
     # create here object from user instance
-    def __init__(self, email: str, password: str, permissions: int, name: str, company_id: int):
+    def __init__(self, email: str, password: str, preferences: Optional[dict], name: str, company_id: int):
         self.email = email
         self.password = password
-        self.permissions = 0
+        self.preferences = preferences
         self.name = name
         # self.date_updated = datetime.now(datetime.timezone.utc)
         self.date_updated = datetime.datetime.utcnow()
@@ -41,7 +45,7 @@ class User(db.Model):
             'id': self.id,
             'email': self.email,
             'password': self.password,
-            'permissions': self.permissions,
+            'preferences': self.preferences,
             'name': self.name,
             'date_updated': self.date_updated.isoformat(),
             'company_id': self.company_id
@@ -67,12 +71,14 @@ class User(db.Model):
 users_stores = db.Table(
     'users_stores',
     db.Column(
-        'user_id', db.Integer,
+        # 'user_id', db.Integer,
+        'user_id', UUID(as_uuid=True),
         db.ForeignKey('users.id', ondelete='CASCADE'),
         primary_key=True
     ),
     db.Column(
-        'store_id', db.Integer,
+        # 'store_id', db.Integer,
+        'store_id', UUID(as_uuid=True),
         db.ForeignKey('stores.id', ondelete='CASCADE'),
         primary_key=True
     ),

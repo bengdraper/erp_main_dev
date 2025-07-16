@@ -48,11 +48,11 @@ from psycopg2.extras import execute_values
 
 # ---- CONFIG ----
 DB_CONFIG = {
-    "host": "localhost",
+    "host": "db",
     "port": 5432,
-    "dbname": "erp_db",
-    "user": "erp_user",
-    "password": "your_password"
+    "dbname": "erp_main",
+    "user": "postgres",
+    "password": "postgres"
 }
 
 # ---- UTILS ----
