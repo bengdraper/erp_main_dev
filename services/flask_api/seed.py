@@ -1,38 +1,4 @@
 # ---------------------------------------------------------------------------
-# HOW TO RUN THIS SEED SCRIPT AUTOMATICALLY WITH DOCKER COMPOSE
-#
-# 1. Place this script (seed_db.py) in a directory accessible to your backend
-#    or database service container (e.g., /seed/seed_db.py).
-#
-# 2. In your docker-compose.yml, add a service or an entrypoint/command override
-#    to run this script after the database is ready. Example options:
-#
-#    a) As a one-off service (recommended for idempotent scripts):
-#       services:
-#         db-seed:
-#           image: python:3.12
-#           depends_on:
-#             - db
-#           volumes:
-#             - ./seed/seed_db.py:/seed/seed_db.py
-#           environment:
-#             - PGHOST=db
-#             - PGUSER=youruser
-#             - PGPASSWORD=yourpassword
-#             - PGDATABASE=yourdb
-#           command: ["python", "/seed/seed_db.py"]
-#
-#    b) Or as a post-init command in your backend service:
-#       command: >
-#         bash -c "python /seed/seed_db.py && exec your-backend-start-command"
-#
-# 3. Ensure the script is idempotent (safe to run multiple times).
-#
-# 4. For local development, you can also run it manually:
-#       docker-compose run --rm db-seed
-#
-# 5. Adjust environment variables and paths as needed for your setup.
-# ---------------------------------------------------------------------------
 
 """
 Seed script for ERP Postgres DB (multi-tenant, RLS-ready, UUID PKs)
@@ -191,14 +157,19 @@ def main():
     """
     with get_conn() as conn:
         with conn.cursor() as cur:
+
             print("Seeding organizations...")
             orgs = seed_organizations(cur)
+
             print("Seeding companies...")
             companies = seed_companies(cur, orgs)
+
             print("Seeding users...")
             users = seed_users(cur, orgs, companies)
+
             print("Seeding roles and permissions...")
             roles_perms = seed_roles_permissions(cur, orgs)
+
             # Add more seeding calls here, in dependency order.
             conn.commit()
             print("Seeding complete.")
