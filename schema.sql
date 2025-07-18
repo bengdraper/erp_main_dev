@@ -1,4 +1,14 @@
-
+-- '''
+-- todo:
+-- - all org_id and fkey refs
+-- - all fkey refs everywhere
+-- - refactor 1 create table 1 alter table as possible
+-- - clean bridge table on delete flows
+-- - metadata cols any/all
+-- - created / updated timestamps any/all
+-- - review config settings for deployment states
+-- - clean up dev comments
+-- '''
 
 -- database configuration
 SET statement_timeout = 0;
@@ -16,12 +26,15 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ## ***** DB CATEGORY DOMAINS AND CONTROLS
 CREATE TABLE users (
     -- id SERIAL PRIMARY KEY,
+    org_id UUID NOT NULL,
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
     name TEXT NOT NULL,
     date_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    company_id UUID
+    company_id UUID,
+    metadata JSONB DEFAULT '{}'::jsonb
+    -- FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT
 
     -- users
     -- CONSTRAINT fk_users_company
@@ -31,11 +44,14 @@ CREATE TABLE users (
 );
 
 CREATE TABLE users_stores (
+    org_id UUID NOT NULL,
     user_id UUID NOT NULL,
     store_id UUID NOT NULL,
     date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
     PRIMARY KEY (user_id, store_id)
+    -- FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    -- FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE,
+    -- FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT
 
     -- users_stores
     -- CONSTRAINT fk_users_stores_user
@@ -48,15 +64,22 @@ CREATE TABLE users_stores (
 );
 
 CREATE TABLE companies (
+    org_id UUID NOT NULL,
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL UNIQUE
+    name TEXT NOT NULL UNIQUE,
+    metadata JSONB DEFAULT '{}'::jsonb
+    -- FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT
 );
 
 CREATE TABLE stores (
+    org_id UUID NOT NULL,
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE,
     company_id UUID NOT NULL,
     chart_of_accounts_id INT NOT NULL DEFAULT 1
+    -- FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT,
+    -- FOREIGN KEY (company_id) REFERENCES companies (id) ON DELETE RESTRICT,
+    -- FOREIGN KEY (chart_of_accounts_id) REFERENCES chart_of_accounts (id) ON DELETE SET DEFAULT
 
     -- stores
     -- CONSTRAINT fk_stores_companies
@@ -69,9 +92,13 @@ CREATE TABLE stores (
 );
 
 CREATE TABLE stores_menus (
+    org_id UUID NOT NULL,
     store_id UUID NOT NULL,
     menu_id INT NOT NULL,
     PRIMARY KEY (store_id, menu_id)
+    -- FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    -- FOREIGN KEY (menu_id) REFERENCES menus(id) ON DELETE CASCADE,
+    -- FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT
 
     -- stores_menus
     -- CONSTRAINT fk_stores_menus_store
@@ -86,16 +113,21 @@ CREATE TABLE stores_menus (
 -- --  ## ***** DB CATEGORY ACCOUNTS
 
 CREATE TABLE chart_of_accounts (
+    org_id UUID NOT NULL,
     id SERIAL PRIMARY KEY,
     description TEXT NOT NULL UNIQUE,
     date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    -- FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT
 );
 
 CREATE TABLE chart_of_accounts_sales_account_categories (
+    org_id UUID NOT NULL,
     chart_of_accounts_id INT,
     sales_account_categories_id INT,
     PRIMARY KEY (chart_of_accounts_id, sales_account_categories_id)
-
+    -- FOREIGN KEY (chart_of_accounts_id) REFERENCES chart_of_accounts(id) ON DELETE CASCADE
+    -- FOREIGN KEY (sales_account_categories_id) REFERENCES sales_account_categories(id) ON DELETE RESTRICT
+    -- FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT
     -- chart_of_accounts_sales_account_categories
     -- CONSTRAINT fk_chart_of_accounts_sales_categories_chart
     -- FOREIGN KEY (chart_of_accounts_id)
@@ -107,9 +139,21 @@ CREATE TABLE chart_of_accounts_sales_account_categories (
 );
 
 CREATE TABLE chart_of_accounts_cog_account_categories (
+    org_id UUID NOT NULL,
     chart_of_accounts_id INT,
     cog_account_categories_id INT,
     PRIMARY KEY (chart_of_accounts_id, cog_account_categories_id)
+
+    -- FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT,
+
+    -- CONSTRAINT fk_chart_of_accounts_cog_account_categories_chart
+    -- FOREIGN KEY (chart_of_accounts_id)
+    -- REFERENCES chart_of_accounts (id) ON DELETE RESTRICT,
+
+    -- CONSTRAINT fk_chart_of_accounts_cog_account_categories_account_category
+    -- FOREIGN KEY (cog_account_categories_id)
+    -- REFERENCES cog_account_categories (id) ON DELETE CASCADE
+
 
     -- chart_of_accounts_cog_account_categories
     -- CONSTRAINT fk_chart_of_accounts_cog_account_categories_chart
@@ -122,12 +166,14 @@ CREATE TABLE chart_of_accounts_cog_account_categories (
 );
 
 CREATE TABLE sales_account_categories (
+    org_id UUID NOT NULL,
     id SERIAL PRIMARY KEY,
     description TEXT NOT NULL UNIQUE,
     account_number TEXT NOT NULL UNIQUE
 );
 
 CREATE TABLE sales_account_categories_sales_accounts (
+    org_id UUID NOT NULL,
     sales_account_categories_id INT,
     sales_accounts_id INT,
     PRIMARY KEY (sales_account_categories_id, sales_accounts_id)
@@ -143,18 +189,21 @@ CREATE TABLE sales_account_categories_sales_accounts (
 );
 
 CREATE TABLE sales_accounts (
+    org_id UUID NOT NULL,
     id SERIAL PRIMARY KEY,
     description TEXT NOT NULL UNIQUE,
     account_number NUMERIC NOT NULL UNIQUE
 );
 
 CREATE TABLE cog_account_categories (
+    org_id UUID NOT NULL,
     id SERIAL PRIMARY KEY,
     description TEXT NOT NULL UNIQUE,
     account_number NUMERIC NOT NULL UNIQUE
 );
 
 CREATE TABLE cog_accounts (
+    org_id UUID NOT NULL,
     id SERIAL PRIMARY KEY,
     description TEXT NOT NULL UNIQUE,
     account_number TEXT NOT NULL UNIQUE,
@@ -169,6 +218,7 @@ CREATE TABLE cog_accounts (
 -- ## ***** MENU / RECIPE
 
 CREATE TABLE menus (
+    org_id UUID NOT NULL,
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     description TEXT NOT NULL UNIQUE,
@@ -188,6 +238,7 @@ CREATE TABLE menus (
 -- <
 
 CREATE TABLE menus_recipes_plated (
+    org_id UUID NOT NULL,
     menu_id INT,
     recipes_plated_id INT,
     PRIMARY KEY (menu_id, recipes_plated_id)
@@ -203,6 +254,7 @@ CREATE TABLE menus_recipes_plated (
 );
 
 CREATE TABLE recipes_plated (
+    org_id UUID NOT NULL,
     id SERIAL PRIMARY KEY,
     description TEXT NOT NULL,
     notes TEXT NOT NULL,
@@ -211,6 +263,7 @@ CREATE TABLE recipes_plated (
 );
 
 CREATE TABLE recipes_plated_recipes_nested (
+    org_id UUID NOT NULL,
     recipes_plated_id INT NOT NULL,
     recipes_nested_id INT NOT NULL,
     PRIMARY KEY (recipes_plated_id, recipes_nested_id)
@@ -226,6 +279,7 @@ CREATE TABLE recipes_plated_recipes_nested (
 );
 
 CREATE TABLE recipes_plated_ingredients_types (
+    org_id UUID NOT NULL,
     recipes_plated_id INT NOT NULL,
     ingredients_types_id INT NOT NULL,
 
@@ -246,6 +300,7 @@ CREATE TABLE recipes_plated_ingredients_types (
 );
 
 CREATE TABLE recipes_nested (
+    org_id UUID NOT NULL,
     id SERIAL PRIMARY KEY,
     description TEXT NOT NULL,
     notes TEXT,
@@ -255,6 +310,7 @@ CREATE TABLE recipes_nested (
 );
 
 CREATE TABLE recipes_nested_ingredients_types (
+    org_id UUID NOT NULL,
     recipes_nested_id INT NOT NULL,
     ingredients_types_id INT NOT NULL,
 
@@ -277,6 +333,7 @@ CREATE TABLE recipes_nested_ingredients_types (
 -- -- ## ***** CATEGORY PRODUCT
 
 CREATE TABLE ingredients_types (
+    org_id UUID NOT NULL,
     id SERIAL PRIMARY KEY,
     description TEXT NOT NULL UNIQUE,
     unit_cost numeric NOT NULL,
@@ -301,6 +358,7 @@ CREATE TABLE ingredients_types (
 );
 
 CREATE TABLE ingredients_vendor_items (
+    org_id UUID NOT NULL,
     id SERIAL PRIMARY KEY,
     vendor_item_id NUMERIC NOT NULL,
     vendor_item_description TEXT NOT NULL UNIQUE,
@@ -328,6 +386,7 @@ CREATE TABLE ingredients_vendor_items (
 );
 
 CREATE TABLE vendors (
+    org_id UUID NOT NULL,
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     contact_name TEXT,
@@ -341,179 +400,10 @@ CREATE TABLE vendors (
     date_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-    -- users
-    ALTER TABLE users ADD
-    CONSTRAINT fk_users_company
-    FOREIGN KEY (company_id)
-    REFERENCES companies (id) ON DELETE SET NULL
-    ;
-
-    -- stores
-    ALTER TABLE stores ADD
-    CONSTRAINT fk_stores_companies
-    FOREIGN KEY (company_id)
-    REFERENCES companies (id) ON DELETE RESTRICT
-    ;
-
-    ALTER TABLE stores ADD
-    CONSTRAINT fk_stores_chart_of_accounts
-    FOREIGN KEY (chart_of_accounts_id)
-    REFERENCES chart_of_accounts (id) ON DELETE SET DEFAULT
-    ;
-
-    -- -- stores_menus
-    ALTER TABLE stores_menus ADD
-    CONSTRAINT fk_stores_menus_store
-    FOREIGN KEY (store_id)
-    REFERENCES stores (id) ON DELETE RESTRICT
-    ;
-
-    ALTER TABLE stores_menus ADD
-    CONSTRAINT fk_stores_menus_menu
-    FOREIGN KEY (menu_id)
-    REFERENCES menus (id) ON DELETE CASCADE
-    ;
-
-
-    -- -- chart_of_accounts_sales_account_categories
-    ALTER TABLE chart_of_accounts_sales_account_categories ADD
-    CONSTRAINT fk_chart_of_accounts_sales_categories_chart
-    FOREIGN KEY (chart_of_accounts_id)
-    REFERENCES chart_of_accounts (id) ON DELETE RESTRICT
-    ;
-
-    ALTER TABLE chart_of_accounts_sales_account_categories ADD
-    CONSTRAINT fk_chart_of_accounts_sales_account_categories_sales_account
-    FOREIGN KEY (sales_account_categories_id)
-    REFERENCES sales_account_categories (id) ON DELETE CASCADE
-    ;
-
-    -- -- chart_of_accounts_cog_account_categories
-    ALTER TABLE chart_of_accounts_cog_account_categories ADD
-    CONSTRAINT fk_chart_of_accounts_cog_account_categories_chart
-    FOREIGN KEY (chart_of_accounts_id)
-    REFERENCES chart_of_accounts (id) ON DELETE RESTRICT
-    ;
-
-    ALTER TABLE chart_of_accounts_cog_account_categories ADD
-    CONSTRAINT fk_chart_of_accounts_cog_account_categories_account_category
-    FOREIGN KEY (cog_account_categories_id)
-    REFERENCES cog_account_categories (id) ON DELETE CASCADE
-    ;
-
-    -- -- sales_account_categories_sales_accounts
-    ALTER TABLE sales_account_categories_sales_accounts ADD
-    CONSTRAINT fk_sales_account_categories_sales_accounts_category
-    FOREIGN KEY (sales_account_categories_id)
-    REFERENCES sales_account_categories (id) ON DELETE RESTRICT
-    ;
-
-    ALTER TABLE sales_account_categories_sales_accounts ADD
-    CONSTRAINT fk_sales_accounts_categories_sales_accounts_account
-    FOREIGN KEY (sales_accounts_id)
-    REFERENCES sales_accounts (id) ON DELETE CASCADE
-    ;
-
-    -- -- cog_accounts
-    ALTER TABLE cog_accounts ADD
-    CONSTRAINT fk_cog_accounts_cog_account_category
-    FOREIGN KEY (cog_account_category_id)
-    REFERENCES cog_account_categories (id) ON DELETE RESTRICT
-    ;
-
-    -- menus
-    ALTER TABLE menus ADD
-    CONSTRAINT fk_menus_sales_account
-    FOREIGN KEY (sales_account_id)
-    REFERENCES sales_accounts (id) ON DELETE RESTRICT;
-
-    -- -- menus_recipes_plated
-    ALTER TABLE menus_recipes_plated ADD
-    CONSTRAINT fk_menus_recipes_plated_menus
-    FOREIGN KEY (menu_id)
-    REFERENCES menus (id) ON DELETE RESTRICT
-    ;
-
-    ALTER TABLE menus_recipes_plated ADD
-    CONSTRAINT fk_menus_recipes_plated_recipes_plated
-    FOREIGN KEY (recipes_plated_id)
-    REFERENCES recipes_plated (id) ON DELETE RESTRICT
-    ;
-
-    -- -- recipes_plated_recipes_nested
-    ALTER TABLE recipes_plated_recipes_nested ADD
-    CONSTRAINT fk_recipes_plated_recipes_nested_plated
-    FOREIGN KEY (recipes_plated_id)
-    REFERENCES recipes_plated (id) ON DELETE RESTRICT
-    ;
-
-    ALTER TABLE recipes_plated_recipes_nested ADD
-    CONSTRAINT fk_recipes_nested_recipes_nested_nested
-    FOREIGN KEY (recipes_nested_id)
-    REFERENCES recipes_nested (id) ON DELETE RESTRICT
-    ;
-
-    -- -- recipes_plated_ingredients_types
-    ALTER TABLE recipes_plated_ingredients_types ADD
-    CONSTRAINT fk_recipes_plated_ingredients_types_recipe
-    FOREIGN KEY (recipes_plated_id)
-    REFERENCES recipes_plated (id) ON DELETE RESTRICT
-    ;
-
-    ALTER TABLE recipes_plated_ingredients_types ADD
-    CONSTRAINT fk_ingredients_types_ingredients_types_ingredient
-    FOREIGN KEY (ingredients_types_id)
-    REFERENCES ingredients_types (id) ON DELETE RESTRICT
-    ;
-
-    -- -- recipes_nested_ingredients_types
-    ALTER TABLE recipes_nested_ingredients_types ADD
-    CONSTRAINT fk_recipes_nested_ingredients_types_recipe
-    FOREIGN KEY (recipes_nested_id)
-    REFERENCES recipes_nested (id) ON DELETE RESTRICT
-    ;
-
-    ALTER TABLE recipes_nested_ingredients_types ADD
-    CONSTRAINT fk_ingredients_types_ingredients_types_ingredient
-    FOREIGN KEY (ingredients_types_id)
-    REFERENCES ingredients_types (id) ON DELETE RESTRICT
-    ;
-
-    -- -- ingredients_types
-    ALTER TABLE ingredients_types ADD
-    CONSTRAINT fk_ingredients_types_cog_account
-    FOREIGN KEY (cog_account_id)
-    REFERENCES cog_accounts (id) ON DELETE RESTRICT
-    ;
-
-    ALTER TABLE ingredients_types ADD
-    CONSTRAINT fk_ingredients_types_preferred_ingredient
-    FOREIGN KEY (preferred_ingredient_item_id)
-    REFERENCES ingredients_vendor_items (id) ON DELETE RESTRICT
-    ;
-
-    ALTER TABLE ingredients_types ADD
-    CONSTRAINT fk_ingredients_types_current_ingredient
-    FOREIGN KEY (current_ingredient_item_id)
-    REFERENCES ingredients_vendor_items (id) ON DELETE SET NULL
-    ;
-
-    -- -- ingredients_vendor_items
-    ALTER TABLE ingredients_vendor_items ADD
-    CONSTRAINT fk_ingredients_vendor_items_ingredients_type
-    FOREIGN KEY (ingredients_type_id)
-    REFERENCES ingredients_types (id) ON DELETE RESTRICT
-    ;
-
-    ALTER TABLE ingredients_vendor_items ADD
-    CONSTRAINT fk_ingredients_vendor_items_vendor
-    FOREIGN KEY (vendor_id)
-    REFERENCES vendors (id) ON DELETE RESTRICT
-    ;
-
 -- roles and permissions
 
 CREATE TABLE roles (
+    org_id UUID NOT NULL,
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE,
     description TEXT
@@ -529,7 +419,8 @@ CREATE TABLE permissions (
 CREATE TABLE organizations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE,
-    description TEXT
+    description TEXT,
+    metadata JSONB DEFAULT '{}'::jsonb
 );
 
 CREATE TABLE divisions (
@@ -585,6 +476,185 @@ CREATE TABLE roles_permissions (
     FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
 );
 
+    -- users
+    ALTER TABLE users ADD
+    CONSTRAINT fk_users_company
+    FOREIGN KEY (company_id)
+    REFERENCES companies (id) ON DELETE SET NULL
+    ;
+
+    -- stores
+    -- ALTER TABLE stores ADD
+    -- CONSTRAINT fk_stores_companies
+    -- FOREIGN KEY (company_id)
+    -- REFERENCES companies (id) ON DELETE RESTRICT
+    -- ;
+
+    -- ALTER TABLE stores ADD
+    -- CONSTRAINT fk_stores_chart_of_accounts
+    -- FOREIGN KEY (chart_of_accounts_id)
+    -- REFERENCES chart_of_accounts (id) ON DELETE SET DEFAULT
+    -- ;
+
+    -- -- stores_menus
+    -- ALTER TABLE stores_menus ADD
+    -- CONSTRAINT fk_stores_menus_store
+    -- FOREIGN KEY (store_id)
+    -- REFERENCES stores (id) ON DELETE RESTRICT
+    -- ;
+
+    -- ALTER TABLE stores_menus ADD
+    -- CONSTRAINT fk_stores_menus_menu
+    -- FOREIGN KEY (menu_id)
+    -- REFERENCES menus (id) ON DELETE CASCADE
+    -- ;
+
+
+    -- -- chart_of_accounts_sales_account_categories
+    ALTER TABLE chart_of_accounts_sales_account_categories
+        ADD CONSTRAINT fk_chart_of_accounts_sales_account_categories_organizations
+            FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+
+        ADD CONSTRAINT fk_chart_of_accounts_sales_account_categories_chart_of_accounts
+            FOREIGN KEY (chart_of_accounts_id) REFERENCES chart_of_accounts(id) ON DELETE RESTRICT,
+
+        ADD CONSTRAINT fk_chart_of_accounts_sales_account_categories_sales_account_categories
+            FOREIGN KEY (sales_account_categories_id) REFERENCES sales_account_categories(id) ON DELETE CASCADE
+    ;
+
+    -- -- chart_of_accounts_cog_account_categories
+    ALTER TABLE chart_of_accounts_cog_account_categories
+        ADD CONSTRAINT fk_chart_of_accounts_cog_account_categories_organizations
+            foreign key (org_id) references organizations (id) on delete restrict,
+
+        ADD CONSTRAINT fk_chart_of_accounts_cog_account_categories_chart_of_accounts
+            foreign key (chart_of_accounts_id) references chart_of_accounts (id) on delete restrict,
+
+        ADD CONSTRAINT fk_chart_of_accounts_cog_account_categories_cog_account_categories
+            FOREIGN KEY (cog_account_categories_id) REFERENCES cog_account_categories (id) ON DELETE CASCADE
+    ;
+
+
+    -- -- sales_account_categories_sales_accounts
+    ALTER TABLE sales_account_categories_sales_accounts
+        ADD CONSTRAINT fk_sales_account_categories_sales_accounts_organizations
+            FOREIGN KEY (org_id) REFERENCES organizations (id),
+
+        ADD CONSTRAINT fk_sales_account_categories_sales_accounts_category
+            FOREIGN KEY (sales_account_categories_id) REFERENCES sales_account_categories (id) ON DELETE RESTRICT,
+
+        ADD CONSTRAINT fk_sales_accounts_categories_sales_accounts_account
+            FOREIGN KEY (sales_accounts_id) REFERENCES sales_accounts (id) ON DELETE CASCADE
+    ;
+
+    -- -- cog_accounts
+    ALTER TABLE cog_accounts
+        ADD CONSTRAINT fk_cog_accounts_cog_account_organizations
+            FOREIGN KEY (org_id) REFERENCES organizations (id) ON DELETE RESTRICT,
+        ADD CONSTRAINT fk_cog_accounts_cog_account_categories
+            FOREIGN KEY (cog_account_category_id) REFERENCES cog_account_categories (id) ON DELETE RESTRICT
+    ;
+
+    -- menus
+    ALTER TABLE menus
+        ADD CONSTRAINT fk_menus_organizations
+            FOREIGN KEY (org_id) REFERENCES organizations (id) ON DELETE RESTRICT,
+        ADD CONSTRAINT fk_menus_sales_account
+            FOREIGN KEY (sales_account_id) REFERENCES sales_accounts (id) ON DELETE RESTRICT
+    ;
+
+    -- -- menus_recipes_plated
+    ALTER TABLE menus_recipes_plated
+        ADD CONSTRAINT fk_menus_recipes_plated_organizations
+            FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT,
+
+        ADD CONSTRAINT fk_menus_recipes_plated_menus
+            FOREIGN KEY (menu_id) REFERENCES menus (id) ON DELETE RESTRICT,
+
+        ADD CONSTRAINT fk_menus_recipes_plated_recipes_plated
+            FOREIGN KEY (recipes_plated_id) REFERENCES recipes_plated (id) ON DELETE CASCADE
+    ;
+
+
+    -- -- recipes_plated_recipes_nested
+    ALTER TABLE recipes_plated_recipes_nested
+        ADD CONSTRAINT fk_recipes_plated_recipes_nested_organizations
+            FOREIGN KEY (org_id) REFERENCES organizations (id) ON DELETE RESTRICT,
+
+        ADD CONSTRAINT fk_recipes_plated_recipes_nested_recipes_plated
+            FOREIGN KEY (recipes_plated_id) REFERENCES recipes_plated (id) ON DELETE RESTRICT,
+
+        ADD CONSTRAINT fk_recipes_nested_recipes_nested_recipes_nested
+            FOREIGN KEY (recipes_nested_id) REFERENCES recipes_nested (id) ON DELETE RESTRICT
+    ;
+
+    -- -- recipes_plated_ingredients_types
+    ALTER TABLE recipes_plated_ingredients_types
+        ADD CONSTRAINT fk_recipes_plated_ingredients_types_organizations
+            FOREIGN KEY (org_id) REFERENCES organizations (id) ON DELETE RESTRICT
+    ;
+
+    ALTER TABLE recipes_plated_ingredients_types
+        ADD CONSTRAINT fk_recipes_plated_ingredients_types_recipes_plated
+            FOREIGN KEY (recipes_plated_id) REFERENCES recipes_plated (id) ON DELETE RESTRICT
+    ;
+
+    ALTER TABLE recipes_plated_ingredients_types
+        ADD CONSTRAINT fk_ingredients_types_ingredients_types_ingredient_types
+            FOREIGN KEY (ingredients_types_id) REFERENCES ingredients_types (id) ON DELETE RESTRICT
+    ;
+
+    -- -- recipes_nested_ingredients_types
+    ALTER TABLE recipes_nested_ingredients_types
+        ADD CONSTRAINT fk_recipes_nested_ingredients_types_organizations
+            FOREIGN KEY (org_id) REFERENCES organizations (id) ON DELETE RESTRICT
+    ;
+
+    ALTER TABLE recipes_nested_ingredients_types
+        ADD CONSTRAINT fk_recipes_nested_ingredients_types_recipes_nested
+            FOREIGN KEY (recipes_nested_id) REFERENCES recipes_nested (id) ON DELETE RESTRICT
+    ;
+
+    ALTER TABLE recipes_nested_ingredients_types
+        ADD CONSTRAINT fk_ingredients_types_ingredients_types_ingredient_types
+            FOREIGN KEY (ingredients_types_id) REFERENCES ingredients_types (id) ON DELETE RESTRICT
+    ;
+
+    -- -- ingredients_types
+    ALTER TABLE ingredients_types
+        ADD CONSTRAINT fk_ingredient_types_organizations
+            FOREIGN KEY (org_id) REFERENCES organizations (id) ON DELETE RESTRICT,
+
+        ADD CONSTRAINT fk_ingredients_types_cog_account
+            FOREIGN KEY (cog_account_id) REFERENCES cog_accounts (id) ON DELETE RESTRICT
+    ;
+
+    ALTER TABLE ingredients_types
+        ADD CONSTRAINT fk_ingredients_types_preferred_ingredient
+            FOREIGN KEY (preferred_ingredient_item_id) REFERENCES ingredients_vendor_items (id) ON DELETE RESTRICT
+    ;
+
+    ALTER TABLE ingredients_types
+        ADD CONSTRAINT fk_ingredients_types_current_ingredient
+            FOREIGN KEY (current_ingredient_item_id) REFERENCES ingredients_vendor_items (id) ON DELETE SET NULL
+    ;
+
+    -- -- ingredients_vendor_items
+    ALTER TABLE ingredients_vendor_items
+        ADD CONSTRAINT fk_ingredients_vendor_items_organizations
+            FOREIGN KEY (org_id) REFERENCES organizations (id) ON DELETE RESTRICT
+    ;
+
+    ALTER TABLE ingredients_vendor_items
+        ADD CONSTRAINT fk_ingredients_vendor_items_ingredients_type
+            FOREIGN KEY (ingredients_type_id) REFERENCES ingredients_types (id) ON DELETE RESTRICT
+    ;
+
+    ALTER TABLE ingredients_vendor_items
+        ADD CONSTRAINT fk_ingredients_vendor_items_vendor
+            FOREIGN KEY (vendor_id) REFERENCES vendors (id) ON DELETE RESTRICT
+    ;
+
 -- for roles and permissions org /div level
 -- CREATE TABLE organizations (
 --     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -605,17 +675,17 @@ CREATE TABLE roles_permissions (
 --     ADD CONSTRAINT fk_companies_organization
 --         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
-ALTER TABLE stores
-    ADD COLUMN division_id UUID,
-    ADD CONSTRAINT fk_stores_divisions
-        FOREIGN KEY (division_id) REFERENCES divisions(id) ON DELETE RESTRICT;
+-- ALTER TABLE stores
+--     ADD COLUMN division_id UUID,
+--     ADD CONSTRAINT fk_stores_divisions
+--         FOREIGN KEY (division_id) REFERENCES divisions(id) ON DELETE RESTRICT;
 
 -- iterating users_roles permission strategy...
 
-ALTER TABLE users
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_users_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- ALTER TABLE users
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_users_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- update scope designation main tables for RLS
 
@@ -626,135 +696,124 @@ ALTER TABLE users
 --         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- COMPANIES
-ALTER TABLE companies
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_companies_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- ALTER TABLE companies
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_companies_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- STORES
-ALTER TABLE stores
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_stores_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- ALTER TABLE stores
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_stores_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- MENUS
-ALTER TABLE menus
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_menus_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- ALTER TABLE menus
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_menus_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- STORES_MENUS (bridge)
-ALTER TABLE stores_menus
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_stores_menus_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- ALTER TABLE stores_menus
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_stores_menus_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
--- MENUS_RECIPES_PLATED (bridge)
-ALTER TABLE menus_recipes_plated
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_menus_recipes_plated_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- RECIPES_PLATED
 ALTER TABLE recipes_plated
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_recipes_plated_organization
+    ADD CONSTRAINT fk_recipes_plated_organizations
         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- RECIPES_PLATED_RECIPES_NESTED (bridge)
-ALTER TABLE recipes_plated_recipes_nested
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_recipes_plated_recipes_nested_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- ALTER TABLE recipes_plated_recipes_nested
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_recipes_plated_recipes_nested_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- RECIPES_PLATED_INGREDIENTS_TYPES (bridge)
-ALTER TABLE recipes_plated_ingredients_types
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_recipes_plated_ingredients_types_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- ALTER TABLE recipes_plated_ingredients_types
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_recipes_plated_ingredients_types_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- RECIPES_NESTED
 ALTER TABLE recipes_nested
-    ADD COLUMN org_id UUID NOT NULL,
     ADD CONSTRAINT fk_recipes_nested_organization
         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
--- RECIPES_NESTED_INGREDIENTS_TYPES (bridge)
-ALTER TABLE recipes_nested_ingredients_types
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_recipes_nested_ingredients_types_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- -- RECIPES_NESTED_INGREDIENTS_TYPES (bridge)
+-- ALTER TABLE recipes_nested_ingredients_types
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_recipes_nested_ingredients_types_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- INGREDIENTS_TYPES
-ALTER TABLE ingredients_types
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_ingredients_types_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- ALTER TABLE ingredients_types
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_ingredients_types_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
--- INGREDIENTS_VENDOR_ITEMS
-ALTER TABLE ingredients_vendor_items
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_ingredients_vendor_items_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- -- INGREDIENTS_VENDOR_ITEMS
+-- ALTER TABLE ingredients_vendor_items
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_ingredients_vendor_items_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- VENDORS
 ALTER TABLE vendors
-    ADD COLUMN org_id UUID NOT NULL,
+    -- ADD COLUMN org_id UUID NOT NULL,
     ADD CONSTRAINT fk_vendors_organization
         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- CHART_OF_ACCOUNTS
 ALTER TABLE chart_of_accounts
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_chart_of_accounts_organization
+    ADD CONSTRAINT fk_chart_of_accounts_organizations
         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- CHART_OF_ACCOUNTS_SALES_ACCOUNT_CATEGORIES (bridge)
-ALTER TABLE chart_of_accounts_sales_account_categories
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_chart_of_accounts_sales_account_categories_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- ALTER TABLE chart_of_accounts_sales_account_categories
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_chart_of_accounts_sales_account_categories_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- CHART_OF_ACCOUNTS_COG_ACCOUNT_CATEGORIES (bridge)
-ALTER TABLE chart_of_accounts_cog_account_categories
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_chart_of_accounts_cog_account_categories_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- ALTER TABLE chart_of_accounts_cog_account_categories
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_chart_of_accounts_cog_account_categories_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- SALES_ACCOUNT_CATEGORIES
 ALTER TABLE sales_account_categories
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_sales_account_categories_organization
+    ADD CONSTRAINT fk_sales_account_categories_organizations
         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- SALES_ACCOUNT_CATEGORIES_SALES_ACCOUNTS (bridge)
-ALTER TABLE sales_account_categories_sales_accounts
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_sales_account_categories_sales_accounts_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- ALTER TABLE sales_account_categories_sales_accounts
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_sales_account_categories_sales_accounts_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- SALES_ACCOUNTS
 ALTER TABLE sales_accounts
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_sales_accounts_organization
+    ADD CONSTRAINT fk_sales_accounts_organizations
         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- COG_ACCOUNT_CATEGORIES
 ALTER TABLE cog_account_categories
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_cog_account_categories_organization
+    ADD CONSTRAINT fk_cog_account_categories_organizations
         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- COG_ACCOUNTS
-ALTER TABLE cog_accounts
-    ADD COLUMN org_id UUID NOT NULL,
-    ADD CONSTRAINT fk_cog_accounts_organization
-        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+-- ALTER TABLE cog_accounts
+--     ADD COLUMN org_id UUID NOT NULL,
+--     ADD CONSTRAINT fk_cog_accounts_organization
+--         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
 -- metadata cols:
-ALTER TABLE organizations ADD COLUMN metadata JSONB DEFAULT '{}'::jsonb;
-ALTER TABLE companies ADD COLUMN metadata JSONB DEFAULT '{}'::jsonb;
-ALTER TABLE users ADD COLUMN preferences JSONB DEFAULT '{}'::jsonb;
+-- ALTER TABLE organizations ADD COLUMN metadata JSONB DEFAULT '{}'::jsonb;
+-- ALTER TABLE companies ADD COLUMN metadata JSONB DEFAULT '{}'::jsonb;
+-- ALTER TABLE users ADD COLUMN preferences JSONB DEFAULT '{}'::jsonb;
 
 -- -- //////// FOLLOWING NEEDS TO BE REVIEWED AND SOFT TESTED BEFORE COMMIT
 -- -- 1. Enable pgcrypto for UUID generation if not already enabled
@@ -822,10 +881,14 @@ ALTER TABLE users ADD COLUMN preferences JSONB DEFAULT '{}'::jsonb;
 -- ALTER TABLE users_stores
 --     ALTER COLUMN user_id TYPE UUID USING (user_id::uuid);
 
--- ALTER TABLE users_stores
---     DROP CONSTRAINT IF EXISTS users_stores_user_id_fkey,
---     ADD CONSTRAINT fk_users_stores_user
---         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE users_stores
+    ADD CONSTRAINT fk_users_stores_org_id
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_users_stores_user
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_users_stores_store_id
+        FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+;
 
 -- -- DIVISIONS
 -- ALTER TABLE divisions
@@ -849,10 +912,17 @@ ALTER TABLE users ADD COLUMN preferences JSONB DEFAULT '{}'::jsonb;
 -- ALTER TABLE stores
 --     ALTER COLUMN org_id TYPE UUID USING (org_id::uuid);
 
--- ALTER TABLE stores
---     DROP CONSTRAINT IF EXISTS stores_org_id_fkey,
---     ADD CONSTRAINT fk_stores_organization
---         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+ALTER TABLE stores
+    ADD CONSTRAINT fk_stores_organization
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT,
+
+    ADD CONSTRAINT fk_stores_companies
+        FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE RESTRICT,
+
+    ADD CONSTRAINT fk_stores_chart_of_accounts
+        FOREIGN KEY (chart_of_accounts_id) REFERENCES chart_of_accounts(id) ON DELETE RESTRICT
+;
+
 
 -- -- MENUS
 -- ALTER TABLE menus
@@ -1025,3 +1095,13 @@ ALTER TABLE users ADD COLUMN preferences JSONB DEFAULT '{}'::jsonb;
 --     ADD CONSTRAINT fk_cog_accounts_organization
 --         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT;
 
+ALTER TABLE stores_menus
+    -- ADD CONSTRAINT fk_stores_menus_users
+    --     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+
+    ADD CONSTRAINT fk_stores_menus_menus
+        FOREIGN KEY (menu_id) REFERENCES menus(id) ON DELETE CASCADE,
+
+    ADD CONSTRAINT fk_stores_menus_organizations
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE RESTRICT
+;
