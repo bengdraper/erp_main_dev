@@ -33,114 +33,142 @@ def gen_uuid():
 # ---- SEED FUNCTIONS ----
 
 def seed_organizations(cur):
-    """
-    Seed organizations table.
-    Returns: list of org dicts (id, name, description)
-    """
+
     orgs = [
         {"id": gen_uuid(), "name": "Acme Corp", "description": "Demo org"},
         {"id": gen_uuid(), "name": "Globex Inc", "description": "Test org"},
     ]
+
     sql = """
         INSERT INTO organizations (id, name, description)
         VALUES %s
         ON CONFLICT (name) DO NOTHING
     """
+
     values = [(o["id"], o["name"], o["description"]) for o in orgs]
     execute_values(cur, sql, values)
     return orgs
 
-def seed_companies(cur, orgs):
-    """
-    Seed companies table.
-    Returns: list of company dicts (id, name, org_id)
-    """
+def seed_companies(cur, context):
+
+# context.get('orgs')[0]['id']
     companies = [
-        {"id": gen_uuid(), "name": "Acme Subsidiary", "org_id": orgs[0]["id"]},
-        {"id": gen_uuid(), "name": "Globex Division", "org_id": orgs[1]["id"]},
+        {"id": gen_uuid(), "name": "Acme Subsidiary", "org_id": context.get('orgs')[0]['id']},
+        {"id": gen_uuid(), "name": "Globex Division", "org_id": context.get('orgs')[1]['id']},
     ]
+
     sql = """
-        INSERT INTO companies (id, name, org_id)
+        INSERT INTO companies (org_id, id, name)
         VALUES %s
         ON CONFLICT (name) DO NOTHING
     """
-    values = [(c["id"], c["name"], c["org_id"]) for c in companies]
+    values = [(c["org_id"], c["id"], c["name"], ) for c in companies]
     execute_values(cur, sql, values)
     return companies
 
-def seed_users(cur, orgs, companies):
-    """
-    Seed users table.
-    Returns: list of user dicts (id, email, org_id, company_id)
-    """
-    # Use passlib to hash passwords securely for seed users
+def seed_users(cur, context):
+
     from passlib.hash import bcrypt
     users = [
         {
+            "org_id": context.get('orgs')[0]['id'],
             "id": gen_uuid(),
             "email": "admin@acme.com",
             "password": bcrypt.hash("devpassword"),  # Use a known dev password, but always hashed
             "name": "Acme Admin",
-            "org_id": orgs[0]["id"],
-            "company_id": companies[0]["id"]
+            "company_id": context.get('companies')[0]["id"],
         },
         {
+            "org_id": context.get('orgs')[0]["id"],
             "id": gen_uuid(),
             "email": "user@globex.com",
             "password": bcrypt.hash("devpassword"),
             "name": "Globex User",
-            "org_id": orgs[1]["id"],
-            "company_id": companies[1]["id"]
+            "company_id": context.get('companies')[1]["id"],
         },
     ]
+
     sql = """
-        INSERT INTO users (id, email, password, name, org_id, company_id)
+        INSERT INTO users (org_id, id, email, password, name, company_id)
         VALUES %s
         ON CONFLICT (email) DO NOTHING
     """
-    values = [(u["id"], u["email"], u["password"], u["name"], u["org_id"], u["company_id"]) for u in users]
+
+    values = [(u["org_id"], u["id"], u["email"], u["password"], u["name"], u["company_id"]) for u in users]
     execute_values(cur, sql, values)
     return users
 
-def seed_roles_permissions(cur, orgs):
-    """
-    Seed roles, permissions, and users_roles tables.
-    Returns: dicts of roles, permissions, users_roles
-    """
+def seed_roles_permissions(cur, context):
     # Roles
+
     roles = [
-        {"id": gen_uuid(), "name": "admin", "description": "Administrator"},
-        {"id": gen_uuid(), "name": "user", "description": "Regular User"},
+        {
+            "org_id": context.get('orgs')[0]['id'],
+            "id": gen_uuid(),
+            "name": "admin",
+            "description": "Administrator"
+        },
+        {
+            "org_id": context.get('orgs')[1]['id'],
+            "id": gen_uuid(),
+            "name": "user",
+            "description":
+            "Regular User"
+         },
     ]
+
     sql_roles = """
-        INSERT INTO roles (id, name, description)
+        INSERT INTO roles (org_id, id, name, description)
         VALUES %s
         ON CONFLICT (name) DO NOTHING
     """
-    execute_values(cur, sql_roles, [(r["id"], r["name"], r["description"]) for r in roles])
+
+    execute_values(cur, sql_roles, [(r["org_id"], r["id"], r["name"], r["description"]) for r in roles])
 
     # Permissions
     permissions = [
-        {"id": gen_uuid(), "codename": "view_data", "description": "Can view data"},
-        {"id": gen_uuid(), "codename": "edit_data", "description": "Can edit data"},
+        {
+            "org_id": context.get('orgs')[0]['id'],
+            "id": gen_uuid(),
+            "codename": "view_data",
+            "description": "Can view data"
+        },
+        {
+            "org_id": context.get('orgs')[0]['id'],
+            "id": gen_uuid(),
+            "codename": "edit_data",
+            "description": "Can edit data"
+        },
     ]
     sql_perms = """
-        INSERT INTO permissions (id, codename, description)
+        INSERT INTO permissions (org_id, id, codename, description)
         VALUES %s
         ON CONFLICT (codename) DO NOTHING
     """
-    execute_values(cur, sql_perms, [(p["id"], p["codename"], p["description"]) for p in permissions])
+    execute_values(cur, sql_perms, [(p["org_id"], p["id"], p["codename"], p["description"]) for p in permissions])
 
     # Roles-Permissions bridge
     sql_rp = """
-        INSERT INTO roles_permissions (role_id, permission_id)
+        INSERT INTO roles_permissions (org_id, role_id, permission_id)
         VALUES %s
         ON CONFLICT DO NOTHING
     """
     rp_values = [
-        (roles[0]["id"], permissions[0]["id"]),
-        (roles[0]["id"], permissions[1]["id"]),
-        (roles[1]["id"], permissions[0]["id"]),
+        (
+            context.get('orgs')[0]['id'],
+            roles[0]["id"],
+            permissions[0]["id"]
+        ),
+        (
+            context.get('orgs')[0]['id'],
+            roles[0]["id"],
+            permissions[1]["id"]
+        ),
+        (
+            context.get('orgs')[1]['id'],
+            roles[1]["id"],
+            permissions[0]["id"]
+        ),
     ]
     execute_values(cur, sql_rp, rp_values)
 
@@ -157,18 +185,23 @@ def main():
     """
     with get_conn() as conn:
         with conn.cursor() as cur:
+            context = {}
 
             print("Seeding organizations...")
-            orgs = seed_organizations(cur)
+            # orgs = seed_organizations(cur)
+            context['orgs'] = seed_organizations(cur)
 
             print("Seeding companies...")
-            companies = seed_companies(cur, orgs)
+            # companies = seed_companies(cur, orgs)
+            context['companies'] = seed_companies(cur, context)
 
             print("Seeding users...")
-            users = seed_users(cur, orgs, companies)
+            # users = seed_users(cur, orgs, companies)
+            context['users'] = seed_users(cur, context)
 
             print("Seeding roles and permissions...")
-            roles_perms = seed_roles_permissions(cur, orgs)
+            # roles_perms = seed_roles_permissions(cur, orgs)
+            context['roles_perms'] = seed_roles_permissions(cur, context)
 
             # Add more seeding calls here, in dependency order.
             conn.commit()
