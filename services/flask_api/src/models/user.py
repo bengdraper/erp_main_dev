@@ -26,18 +26,18 @@ class User(db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = db.Column(db.String(128), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
-    preferences = db.Column(JSONB, nullable=True)
+    user_metadata = db.Column('metadata', JSONB, nullable=True)
     name = db.Column(db.String(128), nullable=False)
     date_updated = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
     # constraint fkey company id
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
 
     # create here object from user instance
-    def __init__(self, org_id: uuid.UUID, email: str, password: str, preferences: Optional[dict], name: str, company_id: int):
+    def __init__(self, org_id: uuid.UUID, email: str, password: str, user_metadata: Optional[dict], name: str, company_id: int):
         self.org_id = org_id
         self.email = email
         self.password = password
-        self.preferences = preferences
+        self.user_metadata = user_metadata
         self.name = name
         self.date_updated = datetime.now(datetime.timezone.utc)
         self.company_id = company_id
@@ -49,7 +49,7 @@ class User(db.Model):
             'id': self.id,
             'email': self.email,
             'password': self.password,
-            'preferences': self.preferences,
+            'user_medatata': self.user_medatata,
             'name': self.name,
             'date_updated': self.date_updated.isoformat(),
             'company_id': self.company_id

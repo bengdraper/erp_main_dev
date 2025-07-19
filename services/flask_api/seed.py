@@ -103,24 +103,41 @@ def seed_roles_permissions(cur, context):
 
     roles = [
         {
+            # role 0, org 0, can edit
             "org_id": context.get('orgs')[0]['id'],
             "id": gen_uuid(),
             "name": "admin",
             "description": "Administrator"
         },
         {
+            # role 1, org 0, can view
+            "org_id": context.get('orgs')[0]['id'],
+            "id": gen_uuid(),
+            "name": "user",
+            "description": "Regular User"
+        },
+        {
+            # role 2, org 1, edit
+            "org_id": context.get('orgs')[1]['id'],
+            "id": gen_uuid(),
+            "name": "admin",
+            "description": "Administrator"
+         },
+        {
+            # role 3, org 1, view
             "org_id": context.get('orgs')[1]['id'],
             "id": gen_uuid(),
             "name": "user",
-            "description":
-            "Regular User"
+            "description": "Regular User"
          },
     ]
+    for i in roles:
+        print(f'role uuid: ${i['id']}')
 
     sql_roles = """
         INSERT INTO roles (org_id, id, name, description)
         VALUES %s
-        ON CONFLICT (name) DO NOTHING
+        ON CONFLICT (org_id, name) DO NOTHING
     """
 
     execute_values(cur, sql_roles, [(r["org_id"], r["id"], r["name"], r["description"]) for r in roles])
@@ -128,22 +145,38 @@ def seed_roles_permissions(cur, context):
     # Permissions
     permissions = [
         {
+            # perm 1, org 0, admin
+            "org_id": context.get('orgs')[0]['id'],
+            "id": gen_uuid(),
+            "codename": "edit_data",
+            "description": "Can edit data"
+        },
+        {
+            # perm 1, org 0, user
             "org_id": context.get('orgs')[0]['id'],
             "id": gen_uuid(),
             "codename": "view_data",
             "description": "Can view data"
         },
         {
-            "org_id": context.get('orgs')[0]['id'],
+            # perm 2, org 1, admin
+            "org_id": context.get('orgs')[1]['id'],
             "id": gen_uuid(),
             "codename": "edit_data",
             "description": "Can edit data"
+        },
+        {
+            # perm 3, org 1, user
+            "org_id": context.get('orgs')[1]['id'],
+            "id": gen_uuid(),
+            "codename": "view_data",
+            "description": "Can view data"
         },
     ]
     sql_perms = """
         INSERT INTO permissions (org_id, id, codename, description)
         VALUES %s
-        ON CONFLICT (codename) DO NOTHING
+        ON CONFLICT (org_id, codename) DO NOTHING
     """
     execute_values(cur, sql_perms, [(p["org_id"], p["id"], p["codename"], p["description"]) for p in permissions])
 
@@ -155,19 +188,26 @@ def seed_roles_permissions(cur, context):
     """
     rp_values = [
         (
+            # relation 0: org 0, user
             context.get('orgs')[0]['id'],
             roles[0]["id"],
             permissions[0]["id"]
         ),
         (
+            # rel 1 org 0 admin
             context.get('orgs')[0]['id'],
-            roles[0]["id"],
+            roles[1]["id"],
             permissions[1]["id"]
         ),
         (
             context.get('orgs')[1]['id'],
-            roles[1]["id"],
-            permissions[0]["id"]
+            roles[2]["id"],
+            permissions[2]["id"]
+        ),
+        (
+            context.get('orgs')[1]['id'],
+            roles[3]["id"],
+            permissions[3]["id"]
         ),
     ]
     execute_values(cur, sql_rp, rp_values)

@@ -392,15 +392,17 @@ CREATE TABLE vendors (
 CREATE TABLE roles (
     org_id UUID NOT NULL,
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL UNIQUE,
-    description TEXT
+    name TEXT NOT NULL,
+    description TEXT,
+    UNIQUE (org_id, name)
 );
 
 CREATE TABLE permissions (
     org_id UUID NOT NULL,
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    codename TEXT NOT NULL UNIQUE,
-    description TEXT
+    codename TEXT NOT NULL,
+    description TEXT,
+    UNIQUE (org_id, codename)
 );
 
 
