@@ -5,7 +5,6 @@ from .locations import blueprints as locations_blueprints
 from .products import blueprints as products_blueprints
 from .menus import blueprints as menus_blueprints
 
-
 blueprints = [
     tables_bp,
     *users_blueprints,

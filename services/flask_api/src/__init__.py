@@ -7,17 +7,6 @@ from flask_login import current_user
 from .api import *
 from .api import blueprints
 
-# from .api import (
-#     companies,
-#     stores,
-#     users,
-#     menus,
-#     coas,
-#     vendors,
-#     recipes,
-#     tables,
-#     users_stores
-#     )
 
 # https://flask.palletsprojects.com/en/2.0.x/patterns/appfactories/
 
@@ -61,18 +50,6 @@ def create_app(test_config=None):
 
     for bp in blueprints:
         app.register_blueprint(bp)
-    # app.register_blueprint(users.bp)
-    # app.register_blueprint(menus.bp)
-    # app.register_blueprint(coas.bp)
-    # app.register_blueprint(products.bp)
-    # app.register_blueprint(locations.bp)
-    # app.register_blueprint(recipes.bp)
-    # app.register_blueprint(companies.bp)
-    # app.register_blueprint(stores.bp)
-    # app.register_blueprint(vendors.bp)
-    # app.register_blueprint(tables.bp)
-    # app.register_blueprint(users_stores.bp)
-
 
     def list_routes(app):
         import urllib
