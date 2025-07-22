@@ -22,6 +22,7 @@ from ..models import (
     CogAccountCategory,
     CogAccount
 )
+from .config import CORE_PREFIX
 
 tables_models = {
     'chart_of_accounts': ChartOfAccounts,
@@ -34,14 +35,14 @@ tables_models = {
     'cog_accounts': CogAccount
 }
 
-accounts_bp = Blueprint('chart_of_accounts', __name__, url_prefix='/chart_of_accounts')
-accounts_sales_categories_bp = Blueprint('chart_of_accounts_sales_account_categories', __name__, url_prefix='/chart_of_accounts_sales_account_categories')
-accounts_cog_categories_bp = Blueprint('chart_of_accounts_cog_account_categories', __name__, url_prefix='/chart_of_accounts_cog_account_categories')
-sales_categories_bp = Blueprint('sales_account_categories', __name__, url_prefix='/sales_account_categories')
-sales_categories_sales_accounts_bp = Blueprint('sales_account_categories_sales_accounts', __name__, url_prefix='/sales_account_categories_sales_accounts')
-sales_accounts_bp = Blueprint('sales_accounts', __name__, url_prefix='/sales_accounts')
-cog_categories_bp = Blueprint('cog_account_categories', __name__, url_prefix='/cog_account_categories')
-cog_accounts_bp = Blueprint('cog_accounts', __name__, url_prefix='/cog_accounts')
+accounts_bp = Blueprint('chart_of_accounts', __name__, url_prefix=f'{CORE_PREFIX}/chart_of_accounts')
+accounts_sales_categories_bp = Blueprint('chart_of_accounts_sales_account_categories', __name__, url_prefix=f'{CORE_PREFIX}/chart_of_accounts_sales_account_categories')
+accounts_cog_categories_bp = Blueprint('chart_of_accounts_cog_account_categories', __name__, url_prefix=f'{CORE_PREFIX}/chart_of_accounts_cog_account_categories')
+sales_categories_bp = Blueprint('sales_account_categories', __name__, url_prefix=f'{CORE_PREFIX}/sales_account_categories')
+sales_categories_sales_accounts_bp = Blueprint('sales_account_categories_sales_accounts', __name__, url_prefix=f'{CORE_PREFIX}/sales_account_categories_sales_accounts')
+sales_accounts_bp = Blueprint('sales_accounts', __name__, url_prefix=f'{CORE_PREFIX}/sales_accounts')
+cog_categories_bp = Blueprint('cog_account_categories', __name__, url_prefix=f'{CORE_PREFIX}/cog_account_categories')
+cog_accounts_bp = Blueprint('cog_accounts', __name__, url_prefix=f'{CORE_PREFIX}/cog_accounts')
 
 # flat index table from any tablename in request
 def index_any():

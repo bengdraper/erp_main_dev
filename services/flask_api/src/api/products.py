@@ -9,14 +9,15 @@ from ..models import (
     Vendor,
     IngredientVendorItem
 )
+from .config import CORE_PREFIX
 
 tables_models = {
     'vendors': Vendor,
     'ingredients_vendor_items': IngredientVendorItem
 }
 
-vendors_bp = Blueprint('vendors', __name__, url_prefix='/vendors')
-vendor_items_bp = Blueprint('ingredients_vendor_items', __name__, url_prefix='/ingredients_vendor_items')
+vendors_bp = Blueprint('vendors', __name__, url_prefix=f'{CORE_PREFIX}/vendors')
+vendor_items_bp = Blueprint('ingredients_vendor_items', __name__, url_prefix=f'{CORE_PREFIX}/ingredients_vendor_items')
 
 # flat index table from any tablename in request
 def index_any():

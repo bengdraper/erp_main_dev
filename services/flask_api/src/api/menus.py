@@ -23,6 +23,7 @@ from ..models import (
     IngredientType,
     StoreMenu
 )
+from .config import CORE_PREFIX
 
 tables_models = {
     'menus': Menu,
@@ -36,15 +37,15 @@ tables_models = {
     'stores_menus': StoreMenu,
 }
 
-menus_bp = Blueprint('menus', __name__, url_prefix='/menus')
-menus_recipes_plated_bp = Blueprint('menus_recipes_plated', __name__, url_prefix='/menus_recipes_plated')
-recipes_plated_bp = Blueprint('recipes_plated', __name__, url_prefix='/recipes_plated')
-recipes_plated_recipes_nested_bp = Blueprint('recipes_plated_recipes_nested', __name__, url_prefix='/recipes_plated_recipes_nested')
-recipes_plated_ingredients_types_bp = Blueprint('recipes_plated_ingredients_types', __name__, url_prefix='/recipes_plated_ingredients_types')
-recipes_nested_bp = Blueprint('recipes_nested', __name__, url_prefix='/recipes_nested')
-recipes_nested_ingredients_types_bp = Blueprint('recipes_nested_ingredients_types', __name__, url_prefix='/recipes_nested_ingredients_types')
-ingredients_types_bp = Blueprint('ingredients_types', __name__, url_prefix='/ingredients_types')
-stores_menus_bp = Blueprint('stores_menus', __name__, url_prefix='/stores_menus')
+menus_bp = Blueprint('menus', __name__, url_prefix=f'{CORE_PREFIX}/menus')
+menus_recipes_plated_bp = Blueprint('menus_recipes_plated', __name__, url_prefix=f'{CORE_PREFIX}/menus_recipes_plated')
+recipes_plated_bp = Blueprint('recipes_plated', __name__, url_prefix=f'{CORE_PREFIX}/recipes_plated')
+recipes_plated_recipes_nested_bp = Blueprint('recipes_plated_recipes_nested', __name__, url_prefix=f'{CORE_PREFIX}/recipes_plated_recipes_nested')
+recipes_plated_ingredients_types_bp = Blueprint('recipes_plated_ingredients_types', __name__, url_prefix=f'{CORE_PREFIX}/recipes_plated_ingredients_types')
+recipes_nested_bp = Blueprint('recipes_nested', __name__, url_prefix=f'{CORE_PREFIX}/recipes_nested')
+recipes_nested_ingredients_types_bp = Blueprint('recipes_nested_ingredients_types', __name__, url_prefix=f'{CORE_PREFIX}/recipes_nested_ingredients_types')
+ingredients_types_bp = Blueprint('ingredients_types', __name__, url_prefix=f'{CORE_PREFIX}/ingredients_types')
+stores_menus_bp = Blueprint('stores_menus', __name__, url_prefix=f'{CORE_PREFIX}/stores_menus')
 
 # flat index table from any tablename in request
 def index_any():

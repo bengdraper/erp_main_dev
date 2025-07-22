@@ -7,7 +7,6 @@ from flask_login import current_user
 from .api import *
 from .api import blueprints
 
-
 # https://flask.palletsprojects.com/en/2.0.x/patterns/appfactories/
 
 

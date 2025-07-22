@@ -2,8 +2,9 @@ from flask import Blueprint, jsonify, request, current_app
 from sqlalchemy import inspect, Table, Column, Integer, String, MetaData
 from src.models import db
 import os
+from .config import CORE_PREFIX
 
-bp = Blueprint('tables', __name__, url_prefix='/tables')
+bp = Blueprint('tables', __name__, url_prefix=f'{CORE_PREFIX}/tables')
 
 # Only enable in development
 ENABLE_TABLE_API = os.environ.get('FLASK_ENV', 'development') == 'development'

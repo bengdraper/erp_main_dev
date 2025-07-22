@@ -24,6 +24,7 @@ from ..models import (
     RolePermission,
     UserAudit
 )
+from .config import CORE_PREFIX
 
 # import hashlib
 # import secrets
@@ -46,13 +47,13 @@ tables_models = {
 }
 
 # bluprints here used
-users_bp = Blueprint('users', __name__, url_prefix='/users')
-users_stores_bp = Blueprint('users_stores', __name__, url_prefix='/users_stores')
-roles_bp = Blueprint('roles', __name__, url_prefix='/roles')
-users_roles_bp = Blueprint('users_roles', __name__, url_prefix='/users_roles')
-permissions_bp = Blueprint('permissions', __name__, url_prefix='/permissions')
-roles_permissions_bp = Blueprint('roles_permissions', __name__, url_prefix='/roles_permissions')
-user_audit_bp = Blueprint('users_audit', __name__, url_prefix='/users_audit')
+users_bp = Blueprint('users', __name__, url_prefix=f'{CORE_PREFIX}/users')
+users_stores_bp = Blueprint('users_stores', __name__, url_prefix=f'{CORE_PREFIX}/users_stores')
+roles_bp = Blueprint('roles', __name__, url_prefix=f'{CORE_PREFIX}/roles')
+users_roles_bp = Blueprint('users_roles', __name__, url_prefix=f'{CORE_PREFIX}/users_roles')
+permissions_bp = Blueprint('permissions', __name__, url_prefix=f'{CORE_PREFIX}/permissions')
+roles_permissions_bp = Blueprint('roles_permissions', __name__, url_prefix=f'{CORE_PREFIX}/roles_permissions')
+user_audit_bp = Blueprint('users_audit', __name__, url_prefix=f'{CORE_PREFIX}/users_audit')
 
 # flat index table from any tablename in request
 def index_any():

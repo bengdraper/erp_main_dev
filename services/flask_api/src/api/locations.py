@@ -13,6 +13,7 @@ from ..models import (
     Company,
     Store
 )
+from .config import CORE_PREFIX
 
 tables_models = {
     'organizations': Organization,
@@ -21,10 +22,10 @@ tables_models = {
     'stores': Store
 }
 
-organizations_bp = Blueprint('organizations', __name__, url_prefix='/organizations')
-divisions_bp = Blueprint('divisions', __name__, url_prefix='/divisions')
-companies_bp = Blueprint('companies', __name__, url_prefix='/companies')
-stores_bp = Blueprint('stores', __name__, url_prefix='/stores')
+organizations_bp = Blueprint('organizations', __name__, url_prefix=f'{CORE_PREFIX}/organizations')
+divisions_bp = Blueprint('divisions', __name__, url_prefix=f'{CORE_PREFIX}/divisions')
+companies_bp = Blueprint('companies', __name__, url_prefix=f'{CORE_PREFIX}/companies')
+stores_bp = Blueprint('stores', __name__, url_prefix=f'{CORE_PREFIX}/stores')
 
 # flat index table from any tablename in request
 def index_any():
