@@ -8,6 +8,7 @@ bp = Blueprint('tables', __name__, url_prefix='/tables')
 # Only enable in development
 ENABLE_TABLE_API = os.environ.get('FLASK_ENV', 'development') == 'development'
 
+# SO META
 @bp.route('/', methods=['GET'])
 def list_tables():
     if not ENABLE_TABLE_API:

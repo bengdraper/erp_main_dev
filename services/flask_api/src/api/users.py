@@ -1,41 +1,49 @@
 '''
-exposes
+answers @:
 /users
 /users/id (GET)
 /users/id (PUT)
 /users/id/stores (GET)
+
+/users_stores
+/roles
+/users_roles
+/permissions
+/roles_permissions
+/users_audit
 '''
 
 from flask import Blueprint, jsonify, abort, request
-from ..models import db, User
+from ..models import db, User, UserStore, Role, UserRole, Permission, RolePermission, UserAudit
 # import hashlib
 # import secrets
 import sqlalchemy
-from sqlalchemy import insert
-
+# from sqlalchemy import insert
 
 # def scramble(password: str):
-    # """hash and salt"""
-    # salt = secrets.token_hex(16)
-    # return hashlib.sha512((password + salt).encode('utf-8')).hexdigest()
+#     """hash and salt"""
+#     salt = secrets.token_hex(16)
+#     return hashlib.sha512((password + salt).encode('utf-8')).hexdigest()
 
-bp = Blueprint('users', __name__, url_prefix='/users')
+tables_models = {
+    'users': User,
+    'users_stores': UserStore,
+    'roles': Role,
+    'users_roles': UserRole,
+    'permissions': Permission,
+    'roles_permissions': RolePermission,
+    'users_audit': UserAudit
+}
 
-@bp.route('', methods=['GET']) # decorate path and list of http verbs
-def index():
-    # log = ['hello users']
-    # return jsonify(log)
+def generic_index():
+    if tables_models.get(request.blueprint):
+        res = db.session.query(tables_models.get(request.blueprint)).all()
+        return jsonify([r.serialize() for r in res])
+    abort(404, description="model not found")
 
-    users = User.query.order_by(User.id).all() # order by for case update changes db record position query all return out of expected order
-    result = []
+users_bp = Blueprint('users', __name__, url_prefix='/users')
 
-    for u in users:
-        result.append(u.serialize())
-
-    return jsonify(result)
-
-
-@bp.route('/<int:id>', methods=['GET'])
+@users_bp.route('/<int:id>', methods=['GET'])
 def show(id: int):
 
     u = User.query.get_or_404(id)
@@ -43,7 +51,7 @@ def show(id: int):
     return jsonify(u.serialize())
 
 # delete a user from client
-@bp.route('/<int:id>', methods=['DELETE'])  # for delete requests @ /users/'' (ala blueprint)
+@users_bp.route('/<int:id>', methods=['DELETE'])  # for delete requests @ /users/'' (ala blueprint)
 def delete(id: int):
 
     u = User.query.get_or_404(id)
@@ -55,7 +63,8 @@ def delete(id: int):
     except:
         return jsonify(False)
 
-@bp.route('/<int:id>', methods=['PUT'])
+# create a user
+@users_bp.route('/<int:id>', methods=['PUT'])
 def update_user_by_id(id):
     """Update user profile fields"""
     try:
@@ -83,16 +92,74 @@ def update_user_by_id(id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+users_stores_bp = Blueprint('users_stores', __name__, url_prefix='/users_stores')
+# @users_stores_bp.route('', methods=['GET'])
+# def index():
+#     res = db.session.query(UserStore).all()
+#     return jsonify([r.serialize() for r in res])
 
 
+#     roles_bp,
+roles_bp = Blueprint('roles', __name__, url_prefix='/roles')
+# @roles_bp.route('', methods=['GET'])
+# def index():
 
+#     table = Role.query.order_by(Role.id).all()
+#     result = []
 
+#     for r in Role:
+#         result.append(r.serialize())
 
+#     return jsonify(result)
 
+users_roles_bp = Blueprint('users_roles', __name__, url_prefix='/users_roles')
 
+#     users_roles_bp,
+# @users_roles_bp.route('', methods=['GET'])
+# def index():
+#     res = db.session.query(UserRole).all()
+#     return jsonify([r.serialize() for r in res])
 
+#     permissions_bp,
+permissions_bp = Blueprint('permissions', __name__, url_prefix='/permissions')
+# @permissions_bp.route('', methods=['GET'])
+# def index():
 
+#     table = Permission().query.order_by(Permission.id).all()
+#     result = []
 
+#     for r in Permission:
+#         result.append(r.serialize())
+
+#     return jsonify(result)
+
+#     roles_permissions_bp,
+roles_permissions_bp = Blueprint('roles_permissions', __name__, url_prefix='/roles_permissions')
+# @roles_permissions_bp.route('', methods=['GET'])
+# def index():
+
+#     res = db.session.query(RolePermission).all()
+#     return jsonify([r.serialize() for r in res])
+
+user_audit_bp = Blueprint('users_audit', __name__, url_prefix='/users_audit')
+@user_audit_bp.route('', methods=['GET'])
+def index():
+
+    res = UserAudit().query.all()
+    return jsonify([r.serialize() for r in res])
+
+blueprints = [
+    users_bp,
+    users_stores_bp,
+    roles_bp,
+    users_roles_bp,
+    permissions_bp,
+    roles_permissions_bp,
+    user_audit_bp
+    ]
+
+for bp in blueprints:
+    bp.route('', methods=['GET'])(generic_index)
 
 
 

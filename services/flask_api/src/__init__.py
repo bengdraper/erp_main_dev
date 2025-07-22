@@ -2,33 +2,37 @@ import os
 from flask import Flask
 from flask_migrate import Migrate
 from flask_cors import CORS
+from flask_login import current_user
 
 from .api import *
+from .api import blueprints
 
-from .api import (
-    companies,
-    stores,
-    users,
-    menus,
-    coas,
-    vendors,
-    recipes,
-    tables_bp,
-    tables,
-    users_stores
-    )
+# from .api import (
+#     companies,
+#     stores,
+#     users,
+#     menus,
+#     coas,
+#     vendors,
+#     recipes,
+#     tables,
+#     users_stores
+#     )
 
 # https://flask.palletsprojects.com/en/2.0.x/patterns/appfactories/
 
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
+
     CORS(app)
+
+
     app.config.from_mapping(
         SECRET_KEY='dev',
         SQLALCHEMY_DATABASE_URI='postgresql://postgres:postgres@db:5432/erp_main',
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        SQLALCHEMY_ECHO=True
+        SQLALCHEMY_ECHO=False
     )
 
     if test_config is None:
@@ -48,17 +52,26 @@ def create_app(test_config=None):
     db.init_app(app)
     migrate = Migrate(app, db)
 
-    # from .api import users
-    app.register_blueprint(users.bp)
-    app.register_blueprint(menus.bp)
-    app.register_blueprint(recipes.bp)
-    app.register_blueprint(companies.bp)
-    app.register_blueprint(stores.bp)
-    app.register_blueprint(coas.bp)
-    app.register_blueprint(vendors.bp)
-    app.register_blueprint(tables_bp) # idk what's up here but it works
-    # app.register_blueprint(tables.bp) # this errs
-    app.register_blueprint(users_stores.bp)
+    # capture current user for change audit => db
+    @app.before_request
+    def set_audit_user():
+        if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated:
+            db.session.execute("SET LOCAL app.current_user = %s", [str(current_user.id)])   
+
+
+    for bp in blueprints:
+        app.register_blueprint(bp)
+    # app.register_blueprint(users.bp)
+    # app.register_blueprint(menus.bp)
+    # app.register_blueprint(coas.bp)
+    # app.register_blueprint(products.bp)
+    # app.register_blueprint(locations.bp)
+    # app.register_blueprint(recipes.bp)
+    # app.register_blueprint(companies.bp)
+    # app.register_blueprint(stores.bp)
+    # app.register_blueprint(vendors.bp)
+    # app.register_blueprint(tables.bp)
+    # app.register_blueprint(users_stores.bp)
 
 
     def list_routes(app):

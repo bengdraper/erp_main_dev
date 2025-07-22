@@ -7,3 +7,4 @@ psycopg2-binary
 SQLAlchemy
 flask-cors
 passlib
+flask_login
