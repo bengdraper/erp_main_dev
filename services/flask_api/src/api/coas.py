@@ -1,71 +1,65 @@
 '''
-exposing following routes
-/coas
-/coas/sales_categories
-/coas/sales_accounts
-/coas/cog_categories
-/coas/cog_accounts
+answering @
+/chart_of_accounts
+/chart_of_accounts_sales_account_categories
+/chart_of_accounts_cog_account_categories
+/sales_account_categories
+/sales_account_category_sales_accounts
+/sales_accounts
+/cog_account_categories
+/cog_accounts
 '''
 
 from flask import Blueprint, jsonify, abort, request
-from ..models import db, ChartOfAccounts, SalesAccountCategory, SalesAccount, CogAccountCategory, CogAccount
+from ..models import (
+    db,
+    ChartOfAccounts,
+    ChartOfAccountsSalesAccountCategory,
+    ChartOfAccountsCogAccountCategory,
+    SalesAccountCategory,
+    SalesAccountCategorySalesAccount,
+    SalesAccount,
+    CogAccountCategory,
+    CogAccount
+)
 
-bp = Blueprint('coas', __name__, url_prefix='/coas')
+tables_models = {
+    'chart_of_accounts': ChartOfAccounts,
+    'chart_of_accounts_sales_account_categories': ChartOfAccountsSalesAccountCategory,
+    'chart_of_accounts_cog_account_categories': ChartOfAccountsCogAccountCategory,
+    'sales_account_categories': SalesAccountCategory,
+    'sales_account_categories_sales_accounts': SalesAccountCategorySalesAccount,
+    'sales_accounts': SalesAccount,
+    'cog_account_categories': CogAccountCategory,
+    'cog_accounts': CogAccount
+}
 
-@bp.route('', methods=['GET'])
-def index():
-    # print('hello index route called')
-    log = ['base url coas returns all main coas']
+accounts_bp = Blueprint('chart_of_accounts', __name__, url_prefix='/chart_of_accounts')
+accounts_sales_categories_bp = Blueprint('chart_of_accounts_sales_account_categories', __name__, url_prefix='/chart_of_accounts_sales_account_categories')
+accounts_cog_categories_bp = Blueprint('chart_of_accounts_cog_account_categories', __name__, url_prefix='/chart_of_accounts_cog_account_categories')
+sales_categories_bp = Blueprint('sales_account_categories', __name__, url_prefix='/sales_account_categories')
+sales_categories_sales_accounts_bp = Blueprint('sales_account_categories_sales_accounts', __name__, url_prefix='/sales_account_categories_sales_accounts')
+sales_accounts_bp = Blueprint('sales_accounts', __name__, url_prefix='/sales_accounts')
+cog_categories_bp = Blueprint('cog_account_categories', __name__, url_prefix='/cog_account_categories')
+cog_accounts_bp = Blueprint('cog_accounts', __name__, url_prefix='/cog_accounts')
 
-    coas = ChartOfAccounts.query.order_by(ChartOfAccounts.id).all()
-    result = []
+# flat index table from any tablename in request
+def index_any():
+    if tables_models.get(request.blueprint):
+        res = db.session.query(tables_models.get(request.blueprint)).all()
+        return jsonify([r.serialize() for r in res])
+    abort(404, description="model not found")
 
-    for c in coas:
-        result.append(c.serialize())
+blueprints = [
+    accounts_bp,
+    accounts_sales_categories_bp,
+    accounts_cog_categories_bp,
+    sales_categories_bp,
+    sales_categories_sales_accounts_bp,
+    sales_accounts_bp,
+    cog_categories_bp,
+    cog_accounts_bp
+]
 
-    return jsonify(result)
-
-@bp.route('/sales_categories', methods=['GET'])
-def index_sales_categories():
-
-    response = SalesAccountCategory.query.order_by(SalesAccountCategory.id).all()
-    result = []
-
-    for r in response:
-        result.append(r.serialize())
-
-    return jsonify(result)
-
-@bp.route('/sales_accounts', methods=['GET'])
-def index_sales_accounts():
-
-    response = SalesAccount.query.order_by(SalesAccount.id).all()
-    result = []
-
-    for r in response:
-        result.append(r.serialize())
-
-    return jsonify(result)
-
-
-@bp.route('/cog_accounts', methods=['GET'])
-def index_cog_accounts():
-
-    response = CogAccount.query.order_by(CogAccount.id).all()
-    result = []
-
-    for r in response:
-        result.append(r.serialize())
-
-    return jsonify(result)
-
-@bp.route('/cog_categories', methods=['GET'])
-def index_cog_categories():
-
-    response = CogAccountCategory.query.order_by(CogAccountCategory.id).all()
-    result = []
-
-    for r in response:
-        result.append(r.serialize())
-
-    return jsonify(result)
+for bp in blueprints:
+    bp.route('', methods=['GET'])(index_any)

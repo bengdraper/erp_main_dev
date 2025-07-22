@@ -1,15 +1,35 @@
-# from flask import Blueprint, jsonify, abort, request
-# from ..models import db, ChartOfAccounts, SalesAccountCategory, SalesAccount, CogAccountCategory, CogAccount
+'''
+answering @
+/vendors
+/ingredients_vendor_items
+'''
+from flask import Blueprint, jsonify, abort, request
+from ..models import (
+    db,
+    Vendor,
+    IngredientVendorItem
+)
 
-# bp = Blueprint('products', __name__, url_prefix='/products')
+tables_models = {
+    'vendors': Vendor,
+    'ingredients_vendor_items': IngredientVendorItem
+}
 
-# @bp.route('', methods=['GET']) # decorate path and list of http verbs
-# def index():
+vendors_bp = Blueprint('vendors', __name__, url_prefix='/vendors')
+vendor_items_bp = Blueprint('ingredients_vendor_items', __name__, url_prefix='/ingredients_vendor_items')
 
-#     response = ChartOfAccounts().query.order_by(ChartOfAccounts.id).all()
-#     result = []
+# flat index table from any tablename in request
+def index_any():
+    if tables_models.get(request.blueprint):
+        res = db.session.query(tables_models.get(request.blueprint)).all()
+        return jsonify([r.serialize() for r in res])
+    abort(404, description="model not found")
 
-#     for r in response:
-#         result.append(r.serialize())
+blueprints = [
+    vendors_bp,
+    vendor_items_bp
+]
 
-#     return jsonify(result)
+# index
+for bp in blueprints:
+    bp.route('', methods=['GET'])(index_any)

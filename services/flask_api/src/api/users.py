@@ -14,10 +14,20 @@ answers @:
 '''
 
 from flask import Blueprint, jsonify, abort, request
-from ..models import db, User, UserStore, Role, UserRole, Permission, RolePermission, UserAudit
+from ..models import (
+    db,
+    User,
+    UserStore,
+    Role,
+    UserRole,
+    Permission,
+    RolePermission,
+    UserAudit
+)
+
 # import hashlib
 # import secrets
-import sqlalchemy
+# import sqlalchemy
 # from sqlalchemy import insert
 
 # def scramble(password: str):
@@ -35,19 +45,25 @@ tables_models = {
     'users_audit': UserAudit
 }
 
-def generic_index():
+# bluprints here used
+users_bp = Blueprint('users', __name__, url_prefix='/users')
+users_stores_bp = Blueprint('users_stores', __name__, url_prefix='/users_stores')
+roles_bp = Blueprint('roles', __name__, url_prefix='/roles')
+users_roles_bp = Blueprint('users_roles', __name__, url_prefix='/users_roles')
+permissions_bp = Blueprint('permissions', __name__, url_prefix='/permissions')
+roles_permissions_bp = Blueprint('roles_permissions', __name__, url_prefix='/roles_permissions')
+user_audit_bp = Blueprint('users_audit', __name__, url_prefix='/users_audit')
+
+# flat index table from any tablename in request
+def index_any():
     if tables_models.get(request.blueprint):
         res = db.session.query(tables_models.get(request.blueprint)).all()
         return jsonify([r.serialize() for r in res])
     abort(404, description="model not found")
 
-users_bp = Blueprint('users', __name__, url_prefix='/users')
-
 @users_bp.route('/<int:id>', methods=['GET'])
 def show(id: int):
-
     u = User.query.get_or_404(id)
-
     return jsonify(u.serialize())
 
 # delete a user from client
@@ -92,61 +108,6 @@ def update_user_by_id(id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-users_stores_bp = Blueprint('users_stores', __name__, url_prefix='/users_stores')
-# @users_stores_bp.route('', methods=['GET'])
-# def index():
-#     res = db.session.query(UserStore).all()
-#     return jsonify([r.serialize() for r in res])
-
-
-#     roles_bp,
-roles_bp = Blueprint('roles', __name__, url_prefix='/roles')
-# @roles_bp.route('', methods=['GET'])
-# def index():
-
-#     table = Role.query.order_by(Role.id).all()
-#     result = []
-
-#     for r in Role:
-#         result.append(r.serialize())
-
-#     return jsonify(result)
-
-users_roles_bp = Blueprint('users_roles', __name__, url_prefix='/users_roles')
-
-#     users_roles_bp,
-# @users_roles_bp.route('', methods=['GET'])
-# def index():
-#     res = db.session.query(UserRole).all()
-#     return jsonify([r.serialize() for r in res])
-
-#     permissions_bp,
-permissions_bp = Blueprint('permissions', __name__, url_prefix='/permissions')
-# @permissions_bp.route('', methods=['GET'])
-# def index():
-
-#     table = Permission().query.order_by(Permission.id).all()
-#     result = []
-
-#     for r in Permission:
-#         result.append(r.serialize())
-
-#     return jsonify(result)
-
-#     roles_permissions_bp,
-roles_permissions_bp = Blueprint('roles_permissions', __name__, url_prefix='/roles_permissions')
-# @roles_permissions_bp.route('', methods=['GET'])
-# def index():
-
-#     res = db.session.query(RolePermission).all()
-#     return jsonify([r.serialize() for r in res])
-
-user_audit_bp = Blueprint('users_audit', __name__, url_prefix='/users_audit')
-@user_audit_bp.route('', methods=['GET'])
-def index():
-
-    res = UserAudit().query.all()
-    return jsonify([r.serialize() for r in res])
 
 blueprints = [
     users_bp,
@@ -158,11 +119,19 @@ blueprints = [
     user_audit_bp
     ]
 
+# dynamic index
 for bp in blueprints:
-    bp.route('', methods=['GET'])(generic_index)
+    bp.route('', methods=['GET'])(index_any)
 
 
+# keeping this because I like it...
+# @users_stores_bp.route('', methods=['GET'])
+# def index():
+#     res = db.session.query(UserStore).all()
+#     return jsonify([r.serialize() for r in res])
 
+
+# may still want to ref this later...
 # @bp.route('/<int:id>', methods=['PATCH','PUT'])
 # def update(id: int):
 

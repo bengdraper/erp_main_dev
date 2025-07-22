@@ -1,96 +1,70 @@
 '''
-exposing the following routes
+answering @
 /menus
+/menus_recipes_plated
+/recipes_plated
+/recipes_plated_recipes_nested
+/recipes_plated_ingredient_types
+/recipes_nested
+/recipes_nested_ingredient_types
+/ingredients_types
+/stores_menus
 '''
-
 from flask import Blueprint, jsonify, abort, request
-from ..models import db, Menu, RecipeNested, RecipePlated, IngredientType
+from ..models import (
+    db,
+    Menu,
+    MenuRecipePlated,
+    RecipePlated,
+    RecipePlatedRecipeNested,
+    RecipePlatedIngredientType,
+    RecipeNested,
+    RecipeNestedIngredientType,
+    IngredientType,
+    StoreMenu
+)
 
-bp = Blueprint('menus', __name__, url_prefix='/menus')
+tables_models = {
+    'menus': Menu,
+    'menus_recipes_plated': MenuRecipePlated,
+    'recipes_plated': RecipePlated,
+    'recipes_plated_recipes_nested': RecipePlatedRecipeNested,
+    'recipes_plated_ingredients_types': RecipePlatedIngredientType,
+    'recipes_nested': RecipeNested,
+    'recipes_nested_ingredients_types': RecipeNestedIngredientType,
+    'ingredients_types': IngredientType,
+    'stores_menus': StoreMenu,
+}
 
-@bp.route('', methods=['GET']) # decorate path and list of http verbs
-def index():
-    # print('hello index route called')
-    log = ['hello hello.. hello...']
+menus_bp = Blueprint('menus', __name__, url_prefix='/menus')
+menus_recipes_plated_bp = Blueprint('menus_recipes_plated', __name__, url_prefix='/menus_recipes_plated')
+recipes_plated_bp = Blueprint('recipes_plated', __name__, url_prefix='/recipes_plated')
+recipes_plated_recipes_nested_bp = Blueprint('recipes_plated_recipes_nested', __name__, url_prefix='/recipes_plated_recipes_nested')
+recipes_plated_ingredients_types_bp = Blueprint('recipes_plated_ingredients_types', __name__, url_prefix='/recipes_plated_ingredients_types')
+recipes_nested_bp = Blueprint('recipes_nested', __name__, url_prefix='/recipes_nested')
+recipes_nested_ingredients_types_bp = Blueprint('recipes_nested_ingredients_types', __name__, url_prefix='/recipes_nested_ingredients_types')
+ingredients_types_bp = Blueprint('ingredients_types', __name__, url_prefix='/ingredients_types')
+stores_menus_bp = Blueprint('stores_menus', __name__, url_prefix='/stores_menus')
 
-    menus = Menu.query.order_by(Menu.id).all()
-    result = []
+# flat index table from any tablename in request
+def index_any():
+    if tables_models.get(request.blueprint):
+        res = db.session.query(tables_models.get(request.blueprint)).all()
+        return jsonify([r.serialize() for r in res])
+    abort(404, description="model not found")
 
-    for m in menus:
-        result.append(m.serialize())
+blueprints = [
+menus_bp,
+menus_recipes_plated_bp,
+recipes_plated_bp,
+recipes_plated_recipes_nested_bp,
+recipes_plated_ingredients_types_bp,
+recipes_nested_bp,
+recipes_nested_ingredients_types_bp,
+ingredients_types_bp,
+stores_menus_bp
+]
 
-    return jsonify(result)
-
-@bp.route('/<int:id>', methods=['GET'])
-def show(id: int):
-
-    r = Menu.query.get_or_404(id)
-
-    return jsonify(r.serialize())
-
-
-
-
-
-
-
-# show a tweet
-# decorate bp with path @ /tweets:id GET
-
-# @bp.route('/<int:id>', methods=['GET'])
-# def show(id: int):
-
-#     t = Tweet.query.get_or_404(id)
-
-#     return jsonify(t.serialize())
-
-
-# post a tweet from client
-
-# @bp.route('', methods=['POST'])  # for POST requests @ /tweets/'' (ala blueprint)
-# def create():
-
-#     # check if client request body includes user_id and content
-#     if 'user_id' not in request.json or 'content' not in request.json:
-#         return abort(400)  # flask method abort() w/ status code 
-
-#     # check if client request user_id exists in users
-#     User.query.get_or_404(request.json['user_id'])  # get_or_404 method from User @db.Model
-
-#     # create record tweet from user request body
-#     t = Tweet(
-#         user_id=request.json['user_id'],
-#         content=request.json['content']
-#     )
-
-#     db.session.add(t)  # create this tweet migration at db; sqlalchemy .add()
-#     db.session.commit()  # send it; sqlalchemy .commit()
-
-#     return jsonify(t.serialize())
-
-
-# delete a tweet from client
-
-# @bp.route('/<int:id>', methods=['DELETE'])  # for delete requests @ /tweets/'' (ala blueprint)
-# def delete(id: int):
-
-#     t = Tweet.query.get_or_404(id)
-
-#     try:
-#         db.session.delete(t)
-#         db.session.commit()
-#         return jsonify(True)
-#     except:
-#         return jsonify(False)
-
-# @bp.route('/<int:id>/liking_users', methods=['GET'])
-# def liking_users(id: int):  # takes an id
-
-#     t = Tweet.query.get_or_404(id)
-
-#     result = []
-
-#     for u in t.liking_users:
-#         result.append(u.serialize())
-
-#     return jsonify(result)
+# index
+for bp in blueprints:
+    bp.route('', methods=['GET'])(index_any)

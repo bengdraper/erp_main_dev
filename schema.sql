@@ -546,7 +546,7 @@ ALTER TABLE sales_account_categories_sales_accounts
     ADD CONSTRAINT fk_sales_account_categories_sales_accounts_category
         FOREIGN KEY (sales_account_category_id) REFERENCES sales_account_categories (id) ON DELETE RESTRICT,
     ADD CONSTRAINT fk_sales_accounts_categories_sales_accounts_account
-        FOREIGN KEY (sale_account_id) REFERENCES sales_accounts (id) ON DELETE CASCADE
+        FOREIGN KEY (sales_account_id) REFERENCES sales_accounts (id) ON DELETE CASCADE
 ;
 
 ALTER TABLE cog_accounts

@@ -1,18 +1,18 @@
 from .tables import bp as tables_bp
 from .users import blueprints as users_blueprints
-# from .coas import blueprints as accounts_blueprints
-# from .locations import blueprints as locations_blueprints
-# from .products import blueprints as products_blueprints
-# from .menus import blueprints as menus_blueprints
+from .coas import blueprints as accounts_blueprints
+from .locations import blueprints as locations_blueprints
+from .products import blueprints as products_blueprints
+from .menus import blueprints as menus_blueprints
 
 
 blueprints = [
     tables_bp,
     *users_blueprints,
-    # *accounts_blueprints,
-    # *locations_blueprints,
-    # *products_blueprints,
-    # *menus_blueprints
+    *accounts_blueprints,
+    *locations_blueprints,
+    *products_blueprints,
+    *menus_blueprints
     ]
 
 
