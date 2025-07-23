@@ -29,8 +29,9 @@ CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    name TEXT NOT NULL,
-    company_id UUID,
+    last_name TEXT NOT NULL,
+    first_name TEXT NOT NULL,
+    -- company_id UUID,
     metadata JSONB DEFAULT '{}'::jsonb,
     date_created TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     date_updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -464,6 +465,97 @@ CREATE TRIGGER set_timestamp_roles_permissions
 BEFORE INSERT OR UPDATE ON roles_permissions
 FOR EACH ROW EXECUTE FUNCTION set_timestamp();
 
+CREATE TABLE orgs_members (
+    org_id UUID NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    role_id UUID NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
+    CONSTRAINT uq_orgs_members UNIQUE (org_id, user_id),
+    date_created TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date_updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TRIGGER set_timestamp_orgs_members
+BEFORE INSERT OR UPDATE ON orgs_members
+FOR EACH ROW EXECUTE FUNCTION set_timestamp();
+
+ALTER TABLE orgs_members
+    ADD CONSTRAINT fk_orgs_members_organizations
+        FOREIGN KEY (org_id) REFERENCES organizations (id) ON DELETE RESTRICT
+;
+ALTER TABLE orgs_members
+    ADD CONSTRAINT fk_orgs_members_users
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE RESTRICT
+;
+ALTER TABLE orgs_members
+    ADD CONSTRAINT fk_orgs_members_roles
+        FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE RESTRICT
+;
+
+CREATE TABLE companies_members (
+    org_id UUID NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    role_id UUID NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
+    CONSTRAINT uq_companies_members UNIQUE (org_id, company_id, user_id),
+    date_created TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date_updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TRIGGER set_timestamp_companies_members
+BEFORE INSERT OR UPDATE ON companies_members
+FOR EACH ROW EXECUTE FUNCTION set_timestamp();
+
+ALTER TABLE companies_members
+    ADD CONSTRAINT fk_companies_members_organizations
+        FOREIGN KEY (org_id) REFERENCES organizations (id) ON DELETE RESTRICT
+;
+ALTER TABLE companies_members
+    ADD CONSTRAINT fk_companies_members_companies
+        FOREIGN KEY (company_id) REFERENCES companies (id) ON DELETE RESTRICT
+;
+ALTER TABLE companies_members
+    ADD CONSTRAINT fk_companies_members_users
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE RESTRICT
+;
+ALTER TABLE companies_members
+    ADD CONSTRAINT fk_companies_members_roles
+        FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE RESTRICT
+;
+
+CREATE TABLE stores_members (
+    org_id UUID NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    store_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    role_id UUID NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
+    CONSTRAINT uq_stores_members UNIQUE (org_id, store_id, user_id),
+    date_created TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date_updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TRIGGER set_timestamp_roles_permissions
+BEFORE INSERT OR UPDATE ON stores_members
+FOR EACH ROW EXECUTE FUNCTION set_timestamp();
+
+ALTER TABLE stores_members
+    ADD CONSTRAINT fk_stores_members_organizations
+        FOREIGN KEY (org_id) REFERENCES organizations (id) ON DELETE RESTRICT
+;
+ALTER TABLE stores_members
+    ADD CONSTRAINT fk_stores_members_stores
+        FOREIGN KEY (store_id) REFERENCES stores (id) ON DELETE RESTRICT
+;
+ALTER TABLE stores_members
+    ADD CONSTRAINT fk_orgs_members_users
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE RESTRICT
+;
+ALTER TABLE stores_members
+    ADD CONSTRAINT fk_stores_members_roles
+        FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE RESTRICT
+;
+
 -- now change everything
 ALTER TABLE users_audit
     ADD CONSTRAINT fk_users_audit_organizations
@@ -515,11 +607,6 @@ ALTER TABLE users_roles
 ALTER TABLE permissions
     ADD CONSTRAINT fk_permissions_organizations
         FOREIGN KEY (org_id) REFERENCES organizations (id) ON DELETE RESTRICT
-;
-
-ALTER TABLE users
-    ADD CONSTRAINT fk_users_company
-        FOREIGN KEY (company_id) REFERENCES companies (id) ON DELETE SET NULL
 ;
 
 ALTER TABLE chart_of_accounts_sales_account_categories

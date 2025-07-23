@@ -24,17 +24,19 @@ class User(db.Model):
     email = db.Column(db.String(128), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
     user_metadata = db.Column('metadata', JSONB, nullable=True)
-    name = db.Column(db.String(128), nullable=False)
+    last_name = db.Column(db.String(128), nullable=False)
+    first_name = db.Column(db.String(128), nullable=False)
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
     date_created = db.Column(db.DateTime(timezone=True), nullable=False)
     date_updated = db.Column(db.DateTime(timezone=True), nullable=False)
 
-    def __init__(self, org_id: uuid.UUID, email: str, password: str, user_metadata: Optional[dict], name: str, company_id: int):
+    def __init__(self, org_id: uuid.UUID, email: str, password: str, user_metadata: Optional[dict], last_name: str, first_name: str, company_id: int):
         self.org_id = org_id
         self.email = email
         self.password = password
         self.user_metadata = user_metadata
-        self.name = name
+        self.last_name = last_name
+        self.first_name = first_name
         self.company_id = company_id
 
     def serialize(self):
@@ -44,7 +46,8 @@ class User(db.Model):
             'email': self.email,
             'password': self.password,
             'user_metadata': self.user_metadata,
-            'name': self.name,
+            'last_name': self.last_name,
+            'first_name': self.first_name,
             'company_id': self.company_id,
             'date_created': self.date_created.isoformat() if self.date_created else None,
             'date_updated': self.date_updated.isoformat() if self.date_updated else None

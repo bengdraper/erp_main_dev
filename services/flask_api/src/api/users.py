@@ -11,6 +11,7 @@ answers @:
 /permissions
 /roles_permissions
 /users_audit
+/orgs_members
 '''
 
 from flask import Blueprint, jsonify, abort, request

@@ -1,12 +1,3 @@
-# ---------------------------------------------------------------------------
-
-"""
-Seed script for ERP Postgres DB (multi-tenant, RLS-ready, UUID PKs)
-- Each table's seed logic is in its own function, grouped by dependency.
-- Uses psycopg2 for direct SQL execution.
-- Idempotent: safe to run multiple times.
-- Customize/add data as needed for your dev/test needs.
-"""
 
 import uuid
 import psycopg2
@@ -75,26 +66,28 @@ def seed_users(cur, context):
             "id": gen_uuid(),
             "email": "admin@acme.com",
             "password": bcrypt.hash("devpassword"),  # Use a known dev password, but always hashed
-            "name": "Acme Admin",
-            "company_id": context.get('companies')[0]["id"],
+            "last_name": "Admin",
+            "first_name": "Acme",
+            # "company_id": context.get('companies')[0]["id"],
         },
         {
             "org_id": context.get('orgs')[0]["id"],
             "id": gen_uuid(),
             "email": "user@globex.com",
             "password": bcrypt.hash("devpassword"),
-            "name": "Globex User",
-            "company_id": context.get('companies')[1]["id"],
+            "last_name": "User",
+            "first_name": "Globex",
+            # "company_id": context.get('companies')[1]["id"],
         },
     ]
 
     sql = """
-        INSERT INTO users (org_id, id, email, password, name, company_id)
+        INSERT INTO users (org_id, id, email, password, last_name, first_name)
         VALUES %s
         ON CONFLICT (email) DO NOTHING
     """
 
-    values = [(u["org_id"], u["id"], u["email"], u["password"], u["name"], u["company_id"]) for u in users]
+    values = [(u["org_id"], u["id"], u["email"], u["password"], u["last_name"], u["first_name"]) for u in users]
     execute_values(cur, sql, values)
     return users
 
