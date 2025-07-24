@@ -25,13 +25,12 @@ $$ LANGUAGE plpgsql;
 
 -- TABLES
 CREATE TABLE users (
-    org_id UUID NOT NULL,
+    org_id UUID,
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
     last_name TEXT NOT NULL,
     first_name TEXT NOT NULL,
-    -- company_id UUID,
     metadata JSONB DEFAULT '{}'::jsonb,
     date_created TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     date_updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
